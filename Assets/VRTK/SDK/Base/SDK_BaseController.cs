@@ -567,11 +567,17 @@ namespace VRTK
 
         protected bool CheckActualOrScriptAliasControllerIsLeftHand(GameObject controller)
         {
+            var alias = controller.GetComponent<VRTK_ControllerAlias>();
+            if (alias && alias.Hand == ControllerHand.Left)
+                return true;
             return (IsControllerLeftHand(controller, true) || IsControllerLeftHand(controller, false));
         }
 
         protected bool CheckActualOrScriptAliasControllerIsRightHand(GameObject controller)
         {
+            var alias = controller.GetComponent<VRTK_ControllerAlias>();
+            if (alias && alias.Hand == ControllerHand.Right)
+                return true;
             return (IsControllerRightHand(controller, true) || IsControllerRightHand(controller, false));
         }
 
