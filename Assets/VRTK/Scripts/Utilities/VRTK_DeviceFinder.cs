@@ -199,12 +199,14 @@ namespace VRTK
                 return givenController;
             }
 
-            if (VRTK_SDK_Bridge.IsControllerLeftHand(givenController, false))
+            var alias = givenController.GetComponent<VRTK_ControllerAlias>();
+
+            if ((alias && alias.Hand == SDK_BaseController.ControllerHand.Left) || VRTK_SDK_Bridge.IsControllerLeftHand(givenController, false))
             {
                 return VRTK_SDK_Bridge.GetControllerLeftHand(true);
             }
 
-            if (VRTK_SDK_Bridge.IsControllerRightHand(givenController, false))
+            if ((alias && alias.Hand == SDK_BaseController.ControllerHand.Right) || VRTK_SDK_Bridge.IsControllerRightHand(givenController, false))
             {
                 return VRTK_SDK_Bridge.GetControllerRightHand(true);
             }
