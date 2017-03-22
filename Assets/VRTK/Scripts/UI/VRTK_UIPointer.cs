@@ -339,7 +339,10 @@ namespace VRTK
             lastPointerPressState = false;
             lastPointerClickState = false;
             beamEnabledState = false;
+        }
 
+        protected virtual void Start()
+        {
             if (controller != null)
             {
                 controllerRenderModel = VRTK_SDK_Bridge.GetControllerRenderModel(controller.gameObject);
