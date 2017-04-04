@@ -53,7 +53,7 @@ namespace VRTK
             VRTK_InteractableObject newEventsManager = transform.GetComponentInParent<VRTK_InteractableObject>();
             if (newEventsManager == null)
             {
-                Debug.LogError("The radial menu must be a child of an interactable object or be set in the inspector!");
+                VRTK_Logger.Error(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_NOT_INJECTED, "VRTK_IndependentRadialMenuController", "VRTK_InteractableObject", "eventsManager", "the parent"));
                 return;
             }
             else if (newEventsManager != eventsManager) // Changed managers
@@ -178,14 +178,14 @@ namespace VRTK
         {
             if (rotateTowards == null) // Backup
             {
-                var headsetCamera = VRTK_DeviceFinder.HeadsetCamera();
-                if (headsetCamera)
+                var headset = VRTK_DeviceFinder.HeadsetTransform();
+                if (headset)
                 {
-                    rotateTowards = headsetCamera.gameObject;
+                    rotateTowards = headset.gameObject;
                 }
                 else
                 {
-                    Debug.LogWarning("The IndependentRadialMenu could not automatically find an object to rotate towards.");
+                    VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.COULD_NOT_FIND_OBJECT_FOR_ACTION, "IndependentRadialMenu", "an object", "rotate towards"));
                 }
             }
 

@@ -134,14 +134,14 @@ namespace VRTK
 
         protected virtual void Start()
         {
-            headset = VRTK_DeviceFinder.HeadsetTransform();
+            headset = VRTK_DeviceFinder.HeadsetCamera();
             isTransitioning = false;
             isFaded = false;
 
             VRTK_SharedMethods.AddCameraFade();
             if (!VRTK_SDK_Bridge.HasHeadsetFade(headset))
             {
-                Debug.LogWarning("This 'VRTK_HeadsetFade' script needs a compatible fade script on the camera game object.");
+                VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_GAMEOBJECT, "VRTK_HeadsetFade", "compatible fade", "Camera"));
             }
         }
 

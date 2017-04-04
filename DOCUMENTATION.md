@@ -38,6 +38,7 @@ A collection of pre-defined usable prefabs have been included to allow for each 
  * [Radial Menu](#radial-menu-radialmenu)
  * [Independent Radial Menu Controller](#independent-radial-menu-controller-vrtk_independentradialmenucontroller)
  * [Destination Point](#destination-point-vrtk_destinationpoint)
+ * [Pointer Direction Indicator](#pointer-direction-indicator-vrtk_pointerdirectionindicator)
  * [Console Viewer Canvas](#console-viewer-canvas-vrtk_consoleviewer)
  * [Panel Menu Controller](#panel-menu-controller-panelmenucontroller)
  * [Panel Menu Item Controller](#panel-menu-item-controller-panelmenuitemcontroller)
@@ -143,6 +144,7 @@ There are a number of parameters that can be set on the Prefab which are provide
 
  * **Display Text:** The text that is displayed on the tooltip.
  * **Font Size:** The size of the text that is displayed.
+ * **Container Size:** The size of the tooltip container where `x = width` and `y = height`.
  * **Draw Line From:** An optional transform of where to start drawing the line from. If one is not provided the centre of the tooltip is used for the initial line position.
  * **Draw Line To:** A transform of another object in the scene that a line will be drawn from the tooltip to, this helps denote what the tooltip is in relation to. If no transform is provided and the tooltip is a child of another object, then the parent object's transform will be used as this destination position.
  * **Line Width:** The width of the line drawn between the tooltip and the destination transform.
@@ -214,7 +216,7 @@ There are a number of parameters that can be set on the Prefab which are provide
 
 #### ResetTooltip/0
 
-  > `public void ResetTooltip()`
+  > `public virtual void ResetTooltip()`
 
   * Parameters
    * _none_
@@ -225,7 +227,7 @@ The Reset method reinitalises the tooltips on all of the controller elements.
 
 #### UpdateText/2
 
-  > `public void UpdateText(TooltipButtons element, string newText)`
+  > `public virtual void UpdateText(TooltipButtons element, string newText)`
 
   * Parameters
    * `TooltipButtons element` - The specific controller element to change the tooltip text on.
@@ -237,7 +239,7 @@ The UpdateText method allows the tooltip text on a specific controller element t
 
 #### ToggleTips/2
 
-  > `public void ToggleTips(bool state, TooltipButtons element = TooltipButtons.None)`
+  > `public virtual void ToggleTips(bool state, TooltipButtons element = TooltipButtons.None)`
 
   * Parameters
    * `bool state` - The state of whether to display or hide the controller tooltips, true will display and false will hide.
@@ -301,6 +303,7 @@ If the `Use Joint` Snap Type is selected then a custom Joint component is requir
  * **Highlight Always Active:** The highlight object will always be displayed when the snap drop zone is available even if a valid item isn't being hovered over.
  * **Valid Object List Policy:** A specified VRTK_PolicyList to use to determine which interactable objects will be snapped to the snap drop zone on release.
  * **Display Drop Zone In Editor:** If this is checked then the drop zone highlight section will be displayed in the scene editor window.
+ * **Default Snapped Object:** The game object to snap into the dropzone when the drop zone is enabled. The game object must be valid in any given policy list to snap.
 
 ### Class Variables
 
@@ -320,10 +323,7 @@ If the `Use Joint` Snap Type is selected then a custom Joint component is requir
 
 Adding the `VRTK_SnapDropZone_UnityEvents` component to `VRTK_SnapDropZone` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnObjectEnteredSnapDropZone` - Emits the ObjectEnteredSnapDropZone class event.
- * `OnObjectExitedSnapDropZone` - Emits the ObjectExitedSnapDropZone class event.
- * `OnObjectSnappedToDropZone` - Emits the ObjectSnappedToDropZone class event.
- * `OnObjectUnsnappedFromDropZone` - Emits the ObjectUnsnappedFromDropZone class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -571,8 +571,17 @@ The destination points can also have a locked state if the `Enable Teleport` fla
  * **Default Cursor Object:** The GameObject to use to represent the default cursor state.
  * **Hover Cursor Object:** The GameObject to use to represent the hover cursor state.
  * **Locked Cursor Object:** The GameObject to use to represent the locked cursor state.
+ * **Destination Location:** An optional transform to determine the destination location for the destination marker. This can be useful to offset the destination location from the destination point. If this is left empty then the destiantion point transform will be used.
  * **Snap To Point:** If this is checked then after teleporting, the play area will be snapped to the origin of the destination point. If this is false then it's possible to teleport to anywhere within the destination point collider.
  * **Hide Pointer Cursor On Hover:** If this is checked, then the pointer cursor will be hidden when a valid destination point is hovered over.
+ * **Snap To Rotation:** Determines if the play area will be rotated to the rotation of the destination point upon the destination marker being set.
+
+### Class Variables
+
+ * `public enum RotationTypes` - Allowed snap to rotation types.
+  * `NoRotation` - No rotation information will be emitted in the destination set payload.
+  * `RotateWithNoHeadsetOffset` - The destination point's rotation will be emitted without taking into consideration the current headset rotation.
+  * `RotateWithHeadsetOffset` - The destination point's rotation will be emitted and will take into consideration the current headset rotation.
 
 ### Class Methods
 
@@ -590,6 +599,58 @@ The ResetDestinationPoint resets the destination point back to the default state
 ### Example
 
 `044_CameraRig_RestrictedTeleportZones` uses the `VRTK_DestinationPoint` prefab to set up a collection of pre-defined teleport locations.
+
+---
+
+## Pointer Direction Indicator (VRTK_PointerDirectionIndicator)
+
+### Overview
+
+The Pointer Direction Indicator is used to determine a given world rotation that can be used by a Destiantion Marker.
+
+The Pointer Direction Indicator can be attached to a VRTK_Pointer in the `Direction Indicator` parameter and will the be used to send rotation data when the destination marker events are emitted.
+
+This can be useful for rotating the play area upon teleporting to face the user in a new direction without expecting them to physically turn in the play space.
+
+### Inspector Parameters
+
+ * **Include Headset Offset:** If this is checked then the reported rotation will include the offset of the headset rotation in relation to the play area.
+
+### Class Methods
+
+#### Initialize/1
+
+  > `public virtual void Initialize(VRTK_ControllerEvents events)`
+
+  * Parameters
+   * `VRTK_ControllerEvents events` - The Controller Events script that is used to control the direction indicator's rotation.
+  * Returns
+   * _none_
+
+The Initialize method is used to set up the direction indicator.
+
+#### SetPosition/2
+
+  > `public virtual void SetPosition(bool active, Vector3 position)`
+
+  * Parameters
+   * `bool active` - Determines if the direction indicator GameObject should be active or not.
+   * `Vector3 position` - The position to set the direction indicator to.
+  * Returns
+   * _none_
+
+The SetPosition method is used to set the world position of the direction indicator.
+
+#### GetRotation/0
+
+  > `public virtual Quaternion GetRotation()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `Quaternion` - The reported rotation of the direction indicator.
+
+The GetRotation method returns the current reported rotation of the direction indicator.
 
 ---
 
@@ -861,9 +922,7 @@ It is utilised by the `VRTK_BasePointer` for dealing with pointer events when th
 
 Adding the `VRTK_DestinationMarker_UnityEvents` component to `VRTK_DestinationMarker` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnDestinationMarkerEnter` - Emits the DestinationMarkerEnter class event.
- * `OnDestinationMarkerExit` - Emits the DestinationMarkerExit class event.
- * `OnDestinationMarkerSet` - Emits the DestinationMarkerSet class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -871,6 +930,7 @@ Adding the `VRTK_DestinationMarker_UnityEvents` component to `VRTK_DestinationMa
  * `Transform target` - The Transform of the collided destination object.
  * `RaycastHit raycastHit` - The optional RaycastHit generated from when the ray collided.
  * `Vector3 destinationPosition` - The world position of the destination marker.
+ * `Quaternion? destinationRotation` - The world rotation of the destination marker.
  * `bool forceDestinationPosition` - If true then the given destination position should not be altered by anything consuming the payload.
  * `bool enableTeleport` - Whether the destination set event should trigger teleport.
  * `uint controllerIndex` - The optional index of the controller emitting the beam.
@@ -944,8 +1004,44 @@ It extends the `VRTK_DestinationMarker` to allow for destination events to be em
  * **Grab To Pointer Tip:** If `Interact With Objects` is checked and this is checked then when an object is grabbed with the pointer touching it, the object will attach to the pointer tip and not snap to the controller.
  * **Controller:** The controller that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
  * **Custom Origin:** A custom transform to use as the origin of the pointer. If no pointer origin transform is provided then the transform the script is attached to is used.
+ * **Direction Indicator:** A custom VRTK_PointerDirectionIndicator to use to determine the rotation given to the destination set event.
+
+### Class Events
+
+ * `ActivationButtonPressed` - Emitted when the pointer activation button is pressed.
+ * `ActivationButtonReleased` - Emitted when the pointer activation button is released.
+ * `SelectionButtonPressed` - Emitted when the pointer selection button is pressed.
+ * `SelectionButtonReleased` - Emitted when the pointer selection button is released.
+
+### Unity Events
+
+Adding the `VRTK_Pointer_UnityEvents` component to `VRTK_Pointer` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
+
+#### IsActivationButtonPressed/0
+
+  > `public virtual bool IsActivationButtonPressed()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the activationButton is being pressed.
+
+The IsActivationButtonPressed method returns whether the configured activation button is being pressed.
+
+#### IsSelectionButtonPressed/0
+
+  > `public virtual bool IsSelectionButtonPressed()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the selectionButton is being pressed.
+
+The IsSelectionButtonPressed method returns whether the configured activation button is being pressed.
 
 #### PointerEnter/1
 
@@ -1049,6 +1145,9 @@ The Play Area Cursor is used in conjunction with a Pointer script and displays a
  * **Handle Play Area Cursor Collisions:** If this is ticked then if the play area cursor is colliding with any other object then the pointer colour will change to the `Pointer Miss Color` and the `DestinationMarkerSet` event will not be triggered, which will prevent teleporting into areas where the play area will collide.
  * **Headset Out Of Bounds Is Collision:** If this is ticked then if the user's headset is outside of the play area cursor bounds then it is considered a collision even if the play area isn't colliding with anything.
  * **Target List Policy:** A specified VRTK_PolicyList to use to determine whether the play area cursor collisions will be acted upon.
+ * **Use Pointer Color:** If this is checked then the pointer hit/miss colours will also be used to change the colour of the play area cursor when colliding/not colliding.
+ * **Valid Location Object:** A custom GameObject to use for the play area cursor representation for when the location is valid.
+ * **Invalid Location Object:** A custom GameObject to use for the play area cursor representation for when the location is invalid.
 
 ### Class Methods
 
@@ -1181,6 +1280,7 @@ Specifies the smoothing to be applied to the pointer.
  * **Max Allowed Per Frame Angle Difference:** The maximum allowed angle between the unsmoothed pointer origin and the smoothed pointer origin per frame to use for smoothing.
  * **Playarea Cursor:** An optional Play Area Cursor generator to add to the destination position of the pointer tip.
  * **Custom Raycast:** A custom raycaster to use for the pointer's raycasts to ignore.
+ * **Pointer Origin Smoothing Settings:** Specifies the smoothing to be applied to the pointer origin when positioning the pointer tip.
  * **Valid Collision Color:** The colour to change the pointer materials when the pointer collides with a valid object. Set to `Color.clear` to bypass changing material colour on valid collision.
  * **Invalid Collision Color:** The colour to change the pointer materials when the pointer is not colliding with anything or with an invalid object. Set to `Color.clear` to bypass changing material colour on invalid collision.
  * **Tracer Visibility:** Determines when the main tracer of the pointer renderer will be visible.
@@ -1338,6 +1438,7 @@ It can be useful for pointing to objects within a scene and it can also determin
  * **Cursor Scale Multiplier:** The scale multiplier to scale the pointer cursor object by in relation to the `Scale Factor`.
  * **Cursor Match Target Rotation:** The cursor will be rotated to match the angle of the target surface if this is true, if it is false then the pointer cursor will always be horizontal.
  * **Cursor Distance Rescale:** Rescale the cursor proportionally to the distance from the tracer origin.
+ * **Maximum Cursor Scale:** The maximum scale the cursor is allowed to reach. This is only used when rescaling the cursor proportionally to the distance from the tracer origin.
  * **Custom Tracer:** A custom game object to use as the appearance for the pointer tracer. If this is empty then a Box primitive will be created and used.
  * **Custom Cursor:** A custom game object to use as the appearance for the pointer cursor. If this is empty then a Sphere primitive will be created and used.
 
@@ -1373,7 +1474,7 @@ It is more useful than the Simple Pointer Renderer for traversing objects of var
 
 ### Inspector Parameters
 
- * **Maximum Length:** The maximum length of the projected forward beam.
+ * **Maximum Length:** The maximum length of the projected beam. The x value is the length of the forward beam, the y value is the length of the downward beam.
  * **Tracer Density:** The number of items to render in the bezier curve tracer beam. A high number here will most likely have a negative impact of game performance due to large number of rendered objects.
  * **Cursor Radius:** The size of the ground cursor. This number also affects the size of the objects in the bezier curve tracer beam. The larger the radius, the larger the objects will be.
  * **Height Limit Angle:** The maximum angle in degrees of the origin before the beam curve height is restricted. A lower angle setting will prevent the beam being projected high into the sky and curving back down.
@@ -1451,8 +1552,7 @@ The y position is never altered so the basic teleporter cannot be used to move u
 
 Adding the `VRTK_BasicTeleport_UnityEvents` component to `VRTK_BasicTeleport` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnTeleporting` - Emits the Teleporting class event.
- * `OnTeleported` - Emits the Teleported class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -1460,6 +1560,7 @@ Adding the `VRTK_BasicTeleport_UnityEvents` component to `VRTK_BasicTeleport` ob
  * `Transform target` - The Transform of the collided destination object.
  * `RaycastHit raycastHit` - The optional RaycastHit generated from when the ray collided.
  * `Vector3 destinationPosition` - The world position of the destination marker.
+ * `Quaternion? destinationRotation` - The world rotation of the destination marker.
  * `bool forceDestinationPosition` - If true then the given destination position should not be altered by anything consuming the payload.
  * `bool enableTeleport` - Whether the destination set event should trigger teleport.
  * `uint controllerIndex` - The optional index of the controller emitting the beam.
@@ -1556,8 +1657,7 @@ The minimum distance for the fixed time dash is determined by the minSpeed and n
 
 Adding the `VRTK_DashTeleport_UnityEvents` component to `VRTK_DashTeleport` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnWillDashThruObjects` - Emits the WillDashThruObjects class event.
- * `OnDashedThruObjects` - Emits the DashedThruObjects class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -1618,8 +1718,7 @@ As this is an abstract class, it cannot be applied directly to a game object and
 
 Adding the `VRTK_ObjectControl_UnityEvents` component to `VRTK_ObjectControl` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnXAxisChanged` - Emits the XAxisChanged class event.
- * `OnYAxisChanged` - Emits the YAxisChanged class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -1652,6 +1751,7 @@ If the controlled object is the play area and `VRTK_BodyPhysics` is also availab
 
  * **Primary Activation Button:** An optional button that has to be engaged to allow the touchpad control to activate.
  * **Action Modifier Button:** An optional button that when engaged will activate the modifier on the touchpad control action.
+ * **Axis Deadzone:** Any input on the axis will be ignored if it is within this deadzone threshold. Between `0f` and `1f`.
 
 ### Example
 
@@ -1777,8 +1877,7 @@ The Player Climb allows player movement based on grabbing of `VRTK_InteractableO
 
 Adding the `VRTK_PlayerClimb_UnityEvents` component to `VRTK_PlayerClimb` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnPlayerClimbStarted` - Emits the PlayerClimbStarted class event.
- * `OnPlayerClimbEnded` - Emits the PlayerClimbEnded class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -1948,7 +2047,7 @@ To enable the Warp Object Control Action, ensure one of the `TouchpadControlOpti
 A collection of scripts that provide the ability to interact with game objects with the controllers.
 
  * [Controller Events](#controller-events-vrtk_controllerevents)
- * [Controller Actions](#controller-actions-vrtk_controlleractions)
+ * [Controller Highlighter](#controller-highlighter-vrtk_controllerhighlighter)
  * [Interactable Object](#interactable-object-vrtk_interactableobject)
  * [Interact Touch](#interact-touch-vrtk_interacttouch)
  * [Interact Grab](#interact-grab-vrtk_interactgrab)
@@ -1974,7 +2073,6 @@ The script also has a public boolean pressed state for the buttons to allow the 
 
 ### Inspector Parameters
 
- * **Menu Toggle Button:** The button to use for the action of bringing up an in-game menu.
  * **Axis Fidelity:** The amount of fidelity in the changes on the axis, which is defaulted to 1. Any number higher than 2 will probably give too sensitive results.
  * **Trigger Click Threshold:** The level on the trigger axis to reach before a click is registered.
  * **Trigger Force Zero Threshold:** The level on the trigger axis to reach before the axis is forced to 0f.
@@ -2025,6 +2123,7 @@ The script also has a public boolean pressed state for the buttons to allow the 
  * `public bool usePressed` - This will be true if the button aliased to the use is held down. Default: `false`
  * `public bool uiClickPressed` - This will be true if the button aliased to the UI click is held down. Default: `false`
  * `public bool menuPressed` - This will be true if the button aliased to the menu is held down. Default: `false`
+ * `public bool controllerVisible` - This will be true if the controller model alias renderers are visible. Default: `true`
 
 ### Class Events
 
@@ -2075,58 +2174,14 @@ The script also has a public boolean pressed state for the buttons to allow the 
  * `ControllerEnabled` - Emitted when the controller is enabled.
  * `ControllerDisabled` - Emitted when the controller is disabled.
  * `ControllerIndexChanged` - Emitted when the controller index changed.
+ * `ControllerVisible` - Emitted when the controller is set to visible.
+ * `ControllerHidden` - Emitted when the controller is set to hidden.
 
 ### Unity Events
 
 Adding the `VRTK_ControllerEvents_UnityEvents` component to `VRTK_ControllerEvents` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnTriggerPressed` - Emits the TriggerPressed class event.
- * `OnTriggerReleased` - Emits the TriggerReleased class event.
- * `OnTriggerTouchStart` - Emits the TriggerTouchStart class event.
- * `OnTriggerTouchEnd` - Emits the TriggerTouchEnd class event.
- * `OnTriggerHairlineStart` - Emits the TriggerHairlineStart class event.
- * `OnTriggerHairlineEnd` - Emits the TriggerHairlineEnd class event.
- * `OnTriggerClicked` - Emits the TriggerClicked class event.
- * `OnTriggerUnclicked` - Emits the TriggerUnclicked class event.
- * `OnTriggerAxisChanged` - Emits the TriggerAxisChanged class event.
- * `OnGripPressed` - Emits the GripPressed class event.
- * `OnGripReleased` - Emits the GripReleased class event.
- * `OnGripTouchStart` - Emits the GripTouchStart class event.
- * `OnGripTouchEnd` - Emits the GripTouchEnd class event.
- * `OnGripHairlineStart` - Emits the GripHairlineStart class event.
- * `OnGripHairlineEnd` - Emits the GripHairlineEnd class event.
- * `OnGripClicked` - Emits the GripClicked class event.
- * `OnGripUnclicked` - Emits the GripUnclicked class event.
- * `OnGripAxisChanged` - Emits the GripAxisChanged class event.
- * `OnTouchpadPressed` - Emits the TouchpadPressed class event.
- * `OnTouchpadReleased` - Emits the TouchpadReleased class event.
- * `OnTouchpadTouchStart` - Emits the TouchpadTouchStart class event.
- * `OnTouchpadTouchEnd` - Emits the TouchpadTouchEnd class event.
- * `OnTouchpadAxisChanged` - Emits the TouchpadAxisChanged class event.
- * `OnButtonOnePressed` - Emits the ButtonOnePressed class event.
- * `OnButtonOneReleased` - Emits the ButtonOneReleased class event.
- * `OnButtonOneTouchStart` - Emits the ButtonOneTouchStart class event.
- * `OnButtonOneTouchEnd` - Emits the ButtonOneTouchEnd class event.
- * `OnButtonTwoPressed` - Emits the ButtonTwoPressed class event.
- * `OnButtonTwoReleased` - Emits the ButtonTwoReleased class event.
- * `OnButtonTwoTouchStart` - Emits the ButtonTwoTouchStart class event.
- * `OnButtonTwoTouchEnd` - Emits the ButtonTwoTouchEnd class event.
- * `OnStartMenuPressed` - Emits the StartMenuPressed class event.
- * `OnStartMenuReleased` - Emits the StartMenuReleased class event.
- * `OnAliasPointerOn` - Emits the AliasPointerOn class event.
- * `OnAliasPointerOff` - Emits the AliasPointerOff class event.
- * `OnAliasPointerSet` - Emits the AliasPointerSet class event.
- * `OnAliasGrabOn` - Emits the AliasGrabOn class event.
- * `OnAliasGrabOff` - Emits the AliasGrabOff class event.
- * `OnAliasUseOn` - Emits the AliasUseOn class event.
- * `OnAliasUseOff` - Emits the AliasUseOff class event.
- * `OnAliasUIClickOn` - Emits the AliasMenuOn class event.
- * `OnAliasUIClickOff` - Emits the AliasMenuOff class event.
- * `OnAliasMenuOn` - Emits the AliasUIClickOn class event.
- * `OnAliasMenuOff` - Emits the AliasUIClickOff class event.
- * `OnControllerEnabled` - Emits the ControllerEnabled class event.
- * `OnControllerDisabled` - Emits the ControllerDisabled class event.
- * `OnControllerIndexChanged` - Emits the ControllerIndexChanged class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -2136,6 +2191,30 @@ Adding the `VRTK_ControllerEvents_UnityEvents` component to `VRTK_ControllerEven
  * `float touchpadAngle` - The rotational position the touchpad is being touched at, 0 being top, 180 being bottom and all other angles accordingly. `0f` to `360f`.
 
 ### Class Methods
+
+#### SetControllerEvent/0
+
+  > `public virtual ControllerInteractionEventArgs SetControllerEvent()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerInteractionEventArgs` - The payload for a Controller Event.
+
+The SetControllerEvent/0 method is used to set the Controller Event payload.
+
+#### SetControllerEvent/3
+
+  > `public virtual ControllerInteractionEventArgs SetControllerEvent(ref bool buttonBool, bool value = false, float buttonPressure = 0f)`
+
+  * Parameters
+   * `ref bool buttonBool` - The state of the pressed button if required.
+   * `bool value` - The value to set the buttonBool reference to.
+   * `float buttonPressure` - The pressure of the button pressed if required.
+  * Returns
+   * `ControllerInteractionEventArgs` - The payload for a Controller Event.
+
+The SetControllerEvent/3 method is used to set the Controller Event payload.
 
 #### GetTouchpadAxis/0
 
@@ -2257,241 +2336,101 @@ The UnsubscribeToButtonAliasEvent method makes it easier to unsubscribe to from 
 
 ---
 
-## Controller Actions (VRTK_ControllerActions)
+## Controller Highlighter (VRTK_ControllerHighlighter)
 
 ### Overview
 
-The Controller Actions script provides helper methods to deal with common controller actions. It deals with actions that can be done to the controller.
+The Controller Highlighter script provides methods to deal with highlighting controller elements.
 
 The highlighting of the controller is defaulted to use the `VRTK_MaterialColorSwapHighlighter` if no other highlighter is applied to the Object.
 
 ### Inspector Parameters
 
+ * **Transition Duration:** The amount of time to take to transition to the set highlight colour.
+ * **Highlight Controller:** The colour to set the entire controller highlight colour to.
+ * **Highlight Body:** The colour to set the body highlight colour to.
+ * **Highlight Trigger:** The colour to set the trigger highlight colour to.
+ * **Highlight Grip:** The colour to set the grip highlight colour to.
+ * **Highlight Touchpad:** The colour to set the touchpad highlight colour to.
+ * **Highlight Button One:** The colour to set the button one highlight colour to.
+ * **Highlight Button Two:** The colour to set the button two highlight colour to.
+ * **Highlight System Menu:** The colour to set the system menu highlight colour to.
+ * **Highlight Start Menu:** The colour to set the start menu highlight colour to.
  * **Model Element Paths:** A collection of strings that determine the path to the controller model sub elements for identifying the model parts at runtime. If the paths are left empty they will default to the model element paths of the selected SDK Bridge.
-  * The available model sub elements are:
-    * `Body Model Path`: The overall shape of the controller.
-    * `Trigger Model Path`: The model that represents the trigger button.
-    * `Grip Left Model Path`: The model that represents the left grip button.
-    * `Grip Right Model Path`: The model that represents the right grip button.
-    * `Touchpad Model Path`: The model that represents the touchpad.
-    * `Button One Model Path`: The model that represents button one.
-    * `Button Two Model Path`: The model that represents button two.
-    * `System Menu Model Path`: The model that represents the system menu button.  * `Start Menu Model Path`: The model that represents the start menu button.
  * **Element Highlighter Overrides:** A collection of highlighter overrides for each controller model sub element. If no highlighter override is given then highlighter on the Controller game object is used.
-  * The available model sub elements are:
-    * `Body`: The highlighter to use on the overall shape of the controller.
-    * `Trigger`: The highlighter to use on the trigger button.
-    * `Grip Left`: The highlighter to use on the left grip button.
-    * `Grip Right`: The highlighter to use on the  right grip button.
-    * `Touchpad`: The highlighter to use on the touchpad.
-    * `Button One`: The highlighter to use on button one.
-    * `Button Two`: The highlighter to use on button two.
-    * `System Menu`: The highlighter to use on the system menu button.  * `Start Menu`: The highlighter to use on the start menu button.
-
-### Class Events
-
- * `ControllerModelVisible` - Emitted when the controller model is toggled to be visible.
- * `ControllerModelInvisible` - Emitted when the controller model is toggled to be invisible.
-
-### Unity Events
-
-Adding the `VRTK_ControllerActions_UnityEvents` component to `VRTK_ControllerActions` object allows access to `UnityEvents` that will react identically to the Class Events.
-
- * `OnControllerModelVisible` - Emits the ControllerModelVisible class event.
- * `OnControllerModelInvisible` - Emits the ControllerModelInvisible class event.
-
-### Event Payload
-
- * `uint controllerIndex` - The index of the controller that was used.
+ * **Controller Alias:** An optional GameObject to specify which controller to apply the script methods to. If this is left blank then this script is required to be placed on a Controller Alias GameObject.
+ * **Model Container:** An optional GameObject to specifiy where the controller models are. If this is left blank then the Model Alias object will be used.
 
 ### Class Methods
 
-#### IsControllerVisible/0
+#### ConfigureControllerPaths/0
 
-  > `public virtual bool IsControllerVisible()`
-
-  * Parameters
-   * _none_
-  * Returns
-   * `bool` - Is true if the controller model has the renderers that are attached to it are enabled.
-
-The IsControllerVisible method returns true if the controller is currently visible by whether the renderers on the controller are enabled.
-
-#### ToggleControllerModel/2
-
-  > `public virtual void ToggleControllerModel(bool state, GameObject grabbedChildObject)`
-
-  * Parameters
-   * `bool state` - The visibility state to toggle the controller to, `true` will make the controller visible - `false` will hide the controller model.
-   * `GameObject grabbedChildObject` - If an object is being held by the controller then this can be passed through to prevent hiding the grabbed game object as well.
-  * Returns
-   * _none_
-
-The ToggleControllerModel method is used to turn on or off the controller model by enabling or disabling the renderers on the object. It will also work for any custom controllers. It should also not disable any objects being held by the controller if they are a child of the controller object.
-
-#### SetControllerOpacity/1
-
-  > `public virtual void SetControllerOpacity(float alpha)`
-
-  * Parameters
-   * `float alpha` - The alpha level to apply to opacity of the controller object. `0f` to `1f`.
-  * Returns
-   * _none_
-
-The SetControllerOpacity method allows the opacity of the controller model to be changed to make the controller more transparent. A lower alpha value will make the object more transparent, such as `0.5f` will make the controller partially transparent where as `0f` will make the controller completely transparent.
-
-#### HighlightControllerElement/3
-
-  > `public virtual void HighlightControllerElement(GameObject element, Color? highlight, float fadeDuration = 0f)`
-
-  * Parameters
-   * `GameObject element` - The element of the controller to apply the highlight to.
-   * `Color? highlight` - The colour of the highlight.
-   * `float fadeDuration` - The duration of fade from white to the highlight colour. Optional parameter defaults to `0f`.
-  * Returns
-   * _none_
-
-The HighlightControllerElement method allows for an element of the controller to have its colour changed to simulate a highlighting effect of that element on the controller. It's useful for being able to draw a user's attention to a specific button on the controller.
-
-#### UnhighlightControllerElement/1
-
-  > `public virtual void UnhighlightControllerElement(GameObject element)`
-
-  * Parameters
-   * `GameObject element` - The element of the controller to remove the highlight from.
-  * Returns
-   * _none_
-
-The UnhighlightControllerElement method is the inverse of the HighlightControllerElement method and resets the controller element to its original colour.
-
-#### ToggleHighlightControllerElement/4
-
-  > `public virtual void ToggleHighlightControllerElement(bool state, GameObject element, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the given element and `false` will remove the highlight from the given element.
-   * `GameObject element` - The element of the controller to apply the highlight to.
-   * `Color? highlight` - The colour of the highlight.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightControllerElement method is a shortcut method that makes it easier to highlight and unhighlight a controller element in a single method rather than using the HighlightControllerElement and UnhighlightControllerElement methods separately.
-
-#### ToggleHighlightTrigger/3
-
-  > `public virtual void ToggleHighlightTrigger(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the trigger and `false` will remove the highlight from the trigger.
-   * `Color? highlight` - The colour to highlight the trigger with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightTrigger method is a shortcut method that makes it easier to toggle the highlight state of the controller trigger element.
-
-#### ToggleHighlightGrip/3
-
-  > `public virtual void ToggleHighlightGrip(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the grip and `false` will remove the highlight from the grip.
-   * `Color? highlight` - The colour to highlight the grip with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightGrip method is a shortcut method that makes it easier to toggle the highlight state of the controller grip element.
-
-#### ToggleHighlightTouchpad/3
-
-  > `public virtual void ToggleHighlightTouchpad(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the touchpad and `false` will remove the highlight from the touchpad.
-   * `Color? highlight` - The colour to highlight the touchpad with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightTouchpad method is a shortcut method that makes it easier to toggle the highlight state of the controller touchpad element.
-
-#### ToggleHighlightButtonOne/3
-
-  > `public virtual void ToggleHighlightButtonOne(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on button one and `false` will remove the highlight from button one.
-   * `Color? highlight` - The colour to highlight button one with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightButtonOne method is a shortcut method that makes it easier to toggle the highlight state of the button one controller element.
-
-#### ToggleHighlightButtonTwo/3
-
-  > `public virtual void ToggleHighlightButtonTwo(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on button two and `false` will remove the highlight from button two.
-   * `Color? highlight` - The colour to highlight button two with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightButtonTwo method is a shortcut method that makes it easier to toggle the highlight state of the button two controller element.
-
-#### ToggleHighlightStartMenu/3
-
-  > `public virtual void ToggleHighlightStartMenu(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the start menu and `false` will remove the highlight from the start menu.
-   * `Color? highlight` - The colour to highlight the start menu with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightStartMenu method is a shortcut method that makes it easier to toggle the highlight state of the start menu controller element.
-
-#### ToggleHighlighBody/3
-
-  > `public virtual void ToggleHighlighBody(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the body and `false` will remove the highlight from the body.
-   * `Color? highlight` - The colour to highlight the body with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlighBody method is a shortcut method that makes it easier to toggle the highlight state of the controller body element.
-
-#### ToggleHighlightController/3
-
-  > `public virtual void ToggleHighlightController(bool state, Color? highlight = null, float duration = 0f)`
-
-  * Parameters
-   * `bool state` - The highlight colour state, `true` will enable the highlight on the entire controller `false` will remove the highlight from the entire controller.
-   * `Color? highlight` - The colour to highlight the entire controller with.
-   * `float duration` - The duration of fade from white to the highlight colour.
-  * Returns
-   * _none_
-
-The ToggleHighlightController method is a shortcut method that makes it easier to toggle the highlight state of the entire controller.
-
-#### InitaliseHighlighters/0
-
-  > `public virtual void InitaliseHighlighters()`
+  > `public virtual void ConfigureControllerPaths()`
 
   * Parameters
    * _none_
   * Returns
    * _none_
 
-The InitaliseHighlighters method sets up the highlighters on the controller model.
+The ConfigureControllerPaths method is used to set up the model element paths.
+
+#### PopulateHighlighters/0
+
+  > `public virtual void PopulateHighlighters()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The PopulateHighlighters method sets up the highlighters on the controller model.
+
+#### HighlightController/2
+
+  > `public virtual void HighlightController(Color color, float fadeDuration = 0f)`
+
+  * Parameters
+   * `Color color` - The colour to highlight the controller to.
+   * `float fadeDuration` - The duration in time to fade from the initial colour to the target colour.
+  * Returns
+   * _none_
+
+The HighlightController method attempts to highlight all sub models of the controller.
+
+#### UnhighlightController/0
+
+  > `public virtual void UnhighlightController()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The UnhighlightController method attempts to remove the highlight from all sub models of the controller.
+
+#### HighlightElement/3
+
+  > `public virtual void HighlightElement(SDK_BaseController.ControllerElements elementType, Color color, float fadeDuration = 0f)`
+
+  * Parameters
+   * `SDK_BaseController.ControllerElements elementType` - The element type on the controller.
+   * `Color color` - The colour to highlight the controller element to.
+   * `float fadeDuration` - The duration in time to fade from the initial colour to the target colour.
+  * Returns
+   * _none_
+
+The HighlightElement method attempts to highlight a specific controller element.
+
+#### UnhighlightElement/1
+
+  > `public virtual void UnhighlightElement(SDK_BaseController.ControllerElements elementType)`
+
+  * Parameters
+   * `SDK_BaseController.ControllerElements elementType` - The element type on the controller.
+  * Returns
+   * _none_
+
+The UnhighlightElement method attempts to remove the highlight from the specific controller element.
 
 ### Example
 
@@ -2551,17 +2490,16 @@ The highlighting of an Interactable Object is defaulted to use the `VRTK_Materia
  * `InteractableObjectUngrabbed` - Emitted when the other object stops grabbing the current object.
  * `InteractableObjectUsed` - Emitted when another object uses the current object (e.g. a controller).
  * `InteractableObjectUnused` - Emitted when the other object stops using the current object.
+ * `InteractableObjectEnteredSnapDropZone` - Emitted when the object enters a snap drop zone.
+ * `InteractableObjectExitedSnapDropZone` - Emitted when the object exists a snap drop zone.
+ * `InteractableObjectSnappedToDropZone` - Emitted when the object gets snapped to a drop zone.
+ * `InteractableObjectUnsnappedFromDropZone` - Emitted when the object gets unsnapped from a drop zone.
 
 ### Unity Events
 
 Adding the `VRTK_InteractableObject_UnityEvents` component to `VRTK_InteractableObject` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnTouch` - Emits the InteractableObjectTouched class event.
- * `OnUntouch` - Emits the InteractableObjectUntouched class event.
- * `OnGrab` - Emits the InteractableObjectGrabbed class event.
- * `OnUngrab` - Emits the InteractableObjectUngrabbed class event.
- * `OnUse` - Emits the InteractableObjectUsed class event.
- * `OnUnuse` - Emits the InteractableObjectUnused class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -2857,11 +2795,12 @@ The ToggleSnapDropZone method is used to set the state of whether the interactab
 
 The IsInSnapDropZone method determines whether the interactable object is currently snapped to a drop zone.
 
-#### SetSnapDropZoneHover/1
+#### SetSnapDropZoneHover/2
 
-  > `public virtual void SetSnapDropZoneHover(bool state)`
+  > `public virtual void SetSnapDropZoneHover(VRTK_SnapDropZone snapDropZone, bool state)`
 
   * Parameters
+   * `VRTK_SnapDropZone snapDropZone` - The Snap Drop Zone object that is being interacted with.
    * `bool state` - The state of whether the object is being hovered or not.
   * Returns
    * _none_
@@ -2943,7 +2882,7 @@ A custom collider can be provided by the Custom Rigidbody Object parameter.
 
 ### Inspector Parameters
 
- * **Custom Rigidbody Object:** If a custom rigidbody and collider for the rigidbody are required, then a gameobject containing a rigidbody and collider can be passed into this parameter. If this is empty then the rigidbody and collider will be auto generated at runtime to match the SDK default controller.
+ * **Custom Collider Container:** An optional GameObject that contains the compound colliders to represent the touching object. If this is empty then the collider will be auto generated at runtime to match the SDK default controller.
 
 ### Class Events
 
@@ -2954,8 +2893,7 @@ A custom collider can be provided by the Custom Rigidbody Object parameter.
 
 Adding the `VRTK_InteractTouch_UnityEvents` component to `VRTK_InteractTouch` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnControllerTouchInteractableObject` - Emits the ControllerTouchInteractableObject class event.
- * `OnControllerUntouchInteractableObject` - Emits the ControllerUntouchInteractableObject class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -3084,9 +3022,13 @@ The interactable objects require a collider to activate the trigger and a rigidb
  * **Throw Multiplier:** An amount to multiply the velocity of any objects being thrown. This can be useful when scaling up the play area to simulate being able to throw items further.
  * **Create Rigid Body When Not Touching:** If this is checked and the controller is not touching an Interactable Object when the grab button is pressed then a rigid body is added to the controller to allow the controller to push other rigid body objects around.
  * **Controller Attach Point:** The rigidbody point on the controller model to snap the grabbed object to. If blank it will be set to the SDK default.
+ * **Controller Events:** The controller to listen for the events on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
 
 ### Class Events
 
+ * `GrabButtonPressed` - Emitted when the grab button is pressed.
+ * `GrabButtonReleased` - Emitted when the grab button is released.
  * `ControllerGrabInteractableObject` - Emitted when a valid object is grabbed.
  * `ControllerUngrabInteractableObject` - Emitted when a valid object is released from being grabbed.
 
@@ -3094,13 +3036,7 @@ The interactable objects require a collider to activate the trigger and a rigidb
 
 Adding the `VRTK_InteractGrab_UnityEvents` component to `VRTK_InteractGrab` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnControllerGrabInteractableObject` - Emits the ControllerGrabInteractableObject class event.
- * `OnControllerUngrabInteractableObject` - Emits the ControllerUngrabInteractableObject class event.
-
-### Event Payload
-
- * `uint controllerIndex` - The index of the controller doing the interaction.
- * `GameObject target` - The GameObject of the interactable object that is being interacted with by the controller.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
 
@@ -3175,9 +3111,14 @@ If a valid interactable object is usable then pressing the set `Use` button on t
 ### Inspector Parameters
 
  * **Use Button:** The button used to use/unuse a touched object.
+ * **Controller Events:** The controller to listen for the events on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Interact Grab:** The Interact Grab to listen for grab actions on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
 
 ### Class Events
 
+ * `UseButtonPressed` - Emitted when the use toggle alias button is pressed.
+ * `UseButtonReleased` - Emitted when the use toggle alias button is released.
  * `ControllerUseInteractableObject` - Emitted when a valid object starts being used.
  * `ControllerUnuseInteractableObject` - Emitted when a valid object stops being used.
 
@@ -3185,13 +3126,7 @@ If a valid interactable object is usable then pressing the set `Use` button on t
 
 Adding the `VRTK_InteractUse_UnityEvents` component to `VRTK_InteractUse` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnControllerUseInteractableObject` - Emits the ControllerUseInteractableObject class event.
- * `OnControllerUnuseInteractableObject` - Emits the ControllerUnuseInteractableObject class event.
-
-### Event Payload
-
- * `uint controllerIndex` - The index of the controller doing the interaction.
- * `GameObject target` - The GameObject of the interactable object that is being interacted with by the controller.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
 
@@ -3332,12 +3267,12 @@ The Interact Controller Appearance script is attached on the same GameObject as 
 
 #### ToggleControllerOnTouch/3
 
-  > `public virtual void ToggleControllerOnTouch(bool showController, VRTK_ControllerActions controllerActions, GameObject obj)`
+  > `public virtual void ToggleControllerOnTouch(bool showController, GameObject touchingObject, GameObject ignoredObject)`
 
   * Parameters
    * `bool showController` - If true then the controller will attempt to be made visible when no longer touching, if false then the controller will be hidden on touch.
-   * `VRTK_ControllerActions controllerActions` - The controller to apply the visibility state to.
-   * `GameObject obj` - The object that is currently being interacted with by the controller which is passed through to the visibility to prevent the object from being hidden as well.
+   * `GameObject touchingObject` - The touching object to apply the visibility state to.
+   * `GameObject ignoredObject` - The object that is currently being interacted with by the touching object which is passed through to the visibility to prevent the object from being hidden as well.
   * Returns
    * _none_
 
@@ -3345,12 +3280,12 @@ The ToggleControllerOnTouch method determines whether the controller should be s
 
 #### ToggleControllerOnGrab/3
 
-  > `public virtual void ToggleControllerOnGrab(bool showController, VRTK_ControllerActions controllerActions, GameObject obj)`
+  > `public virtual void ToggleControllerOnGrab(bool showController, GameObject grabbingObject, GameObject ignoredObject)`
 
   * Parameters
    * `bool showController` - If true then the controller will attempt to be made visible when no longer grabbing, if false then the controller will be hidden on grab.
-   * `VRTK_ControllerActions controllerActions` - The controller to apply the visibility state to.
-   * `GameObject obj` - The object that is currently being interacted with by the controller which is passed through to the visibility to prevent the object from being hidden as well.
+   * `GameObject grabbingObject` - The grabbing object to apply the visibility state to.
+   * `GameObject ignoredObject` - The object that is currently being interacted with by the grabbing object which is passed through to the visibility to prevent the object from being hidden as well.
   * Returns
    * _none_
 
@@ -3358,12 +3293,12 @@ The ToggleControllerOnGrab method determines whether the controller should be sh
 
 #### ToggleControllerOnUse/3
 
-  > `public virtual void ToggleControllerOnUse(bool showController, VRTK_ControllerActions controllerActions, GameObject obj)`
+  > `public virtual void ToggleControllerOnUse(bool showController, GameObject usingObject, GameObject ignoredObject)`
 
   * Parameters
    * `bool showController` - If true then the controller will attempt to be made visible when no longer using, if false then the controller will be hidden on use.
-   * `VRTK_ControllerActions controllerActions` - The controller to apply the visibility state to.
-   * `GameObject obj` - The object that is currently being interacted with by the controller which is passed through to the visibility to prevent the object from being hidden as well.
+   * `GameObject usingObject` - The using object to apply the visibility state to.
+   * `GameObject ignoredObject` - The object that is currently being interacted with by the using object which is passed through to the visibility to prevent the object from being hidden as well.
   * Returns
    * _none_
 
@@ -3387,6 +3322,8 @@ It is possible to automatically grab an Interactable Object to a specific contro
  * **Object Is Prefab:** If the `Object To Grab` is a prefab then this needs to be checked, if the `Object To Grab` already exists in the scene then this needs to be unchecked.
  * **Clone Grabbed Object:** If this is checked then the Object To Grab will be cloned into a new object and attached to the controller leaving the existing object in the scene. This is required if the same object is to be grabbed to both controllers as a single object cannot be grabbed by different controllers at the same time. It is also required to clone a grabbed object if it is a prefab as it needs to exist within the scene to be grabbed.
  * **Always Clone On Enable:** If `Clone Grabbed Object` is checked and this is checked, then whenever this script is disabled and re-enabled, it will always create a new clone of the object to grab. If this is false then the original cloned object will attempt to be grabbed again. If the original cloned object no longer exists then a new clone will be created.
+ * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Interact Grab:** The Interact Grab to listen for grab actions on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
 
 ### Class Methods
 
@@ -3554,7 +3491,7 @@ Due to the way the object material is interacted with, changing the material col
 
 The Draw Call Batching will resume on the original material when the item is no longer highlighted.
 
-This is the default highlighter that is applied to any script that requires a highlighting component (e.g. `VRTK_Interactable_Object` or `VRTK_ControllerActions`).
+This is the default highlighter that is applied to any script that requires a highlighting component (e.g. `VRTK_Interactable_Object`).
 
 ### Inspector Parameters
 
@@ -4478,8 +4415,7 @@ The Headset Collision script will automatically create a script on the headset t
 
 Adding the `VRTK_HeadsetCollision_UnityEvents` component to `VRTK_HeadsetCollision` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnHeadsetCollisionDetect` - Emits the HeadsetCollisionDetect class event.
- * `OnHeadsetCollisionEnded` - Emits the HeadsetCollisionEnded class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -4524,10 +4460,7 @@ The `Fade` and `Unfade` methods can only be called via another script and this H
 
 Adding the `VRTK_HeadsetFade_UnityEvents` component to `VRTK_HeadsetFade` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnHeadsetFadeStart` - Emits the HeadsetFadeStart class event.
- * `OnHeadsetFadeComplete` - Emits the HeadsetFadeComplete class event.
- * `OnHeadsetUnfadeStart` - Emits the HeadsetUnfadeStart class event.
- * `OnHeadsetUnfadeComplete` - Emits the HeadsetUnfadeComplete class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -4621,6 +4554,7 @@ The purpose of Headset Controller Aware is to allow the headset to know if somet
  * **Controller Glance Radius:** The radius of the accepted distance from the controller origin point to determine if the controller is being looked at.
  * **Custom Right Controller Origin:** A custom transform to provide the world space position of the right controller.
  * **Custom Left Controller Origin:** A custom transform to provide the world space position of the left controller.
+ * **Custom Raycast:** A custom raycaster to use when raycasting to find controllers.
 
 ### Class Events
 
@@ -4633,10 +4567,7 @@ The purpose of Headset Controller Aware is to allow the headset to know if somet
 
 Adding the `VRTK_HeadsetControllerAware_UnityEvents` component to `VRTK_HeadsetControllerAware` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnControllerObscured` - Emits the ControllerObscured class event.
- * `OnControllerUnobscured` - Emits the ControllerUnobscured class event.
- * `OnControllerGlanceEnter` - Emits the ControllerGlanceEnter class event.
- * `OnControllerGlanceExit` - Emits the ControllerGlanceExit class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -4734,6 +4665,9 @@ To allow for peeking over a ledge and not falling, a fall restiction can happen 
  * **Movement Threshold:** The amount of movement of the headset between the headset's current position and the current standing position to determine if the user is walking in play space and to ignore the body physics collisions if the movement delta is above this threshold.
  * **Standing History Samples:** The maximum number of samples to collect of headset position before determining if the current standing position within the play space has changed.
  * **Lean Y Threshold:** The `y` distance between the headset and the object being leaned over, if object being leaned over is taller than this threshold then the current standing position won't be updated.
+ * **Step Up Y Offset:** The maximum height to consider when checking if an object can be stepped upon to.
+ * **Step Thickness Multiplier:** The width/depth of the foot collider in relation to the radius of the body collider.
+ * **Step Drop Threshold:** The distance between the current play area Y position and the new stepped up Y position to consider a valid step up. A higher number can help with juddering on slopes or small increases in collider heights.
  * **Custom Raycast:** A custom raycaster to use when raycasting to find floors.
  * **Fall Restriction:** A check to see if the drop to nearest floor should take place. If the selected restrictor is still over the current floor then the drop to nearest floor will not occur. Works well for being able to lean over ledges and look down. Only works for falling down not teleporting up.
  * **Gravity Fall Y Threshold:** When the `y` distance between the floor and the headset exceeds this distance and `Enable Body Collisions` is true then the rigidbody gravity will be used instead of teleport to drop to nearest floor.
@@ -4763,12 +4697,7 @@ To allow for peeking over a ledge and not falling, a fall restiction can happen 
 
 Adding the `VRTK_BodyPhysics_UnityEvents` component to `VRTK_BodyPhysics` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnStartFalling` - Emits the StartFalling class event.
- * `OnStopFalling` - Emits the StopFalling class event.
- * `OnStartMoving` - Emits the StartMoving class event.
- * `OnStopMoving` - Emits the StopMoving class event.
- * `OnStartColliding` - Emits the StartColliding class event.
- * `OnStopColliding` - Emits the StopColliding class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -4956,6 +4885,10 @@ The UI pointer is activated via the `Pointer` alias on the `Controller Events` a
 
 ### Class Events
 
+ * `ActivationButtonPressed` - Emitted when the UI activation button is pressed.
+ * `ActivationButtonReleased` - Emitted when the UI activation button is released.
+ * `SelectionButtonPressed` - Emitted when the UI selection button is pressed.
+ * `SelectionButtonReleased` - Emitted when the UI selection button is released.
  * `UIPointerElementEnter` - Emitted when the UI Pointer is colliding with a valid UI element.
  * `UIPointerElementExit` - Emitted when the UI Pointer is no longer colliding with any valid UI elements.
  * `UIPointerElementClick` - Emitted when the UI Pointer has clicked the currently collided UI element.
@@ -4966,11 +4899,7 @@ The UI pointer is activated via the `Pointer` alias on the `Controller Events` a
 
 Adding the `VRTK_UIPointer_UnityEvents` component to `VRTK_UIPointer` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnUIPointerElementEnter` - Emits the UIPointerElementEnter class event.
- * `OnUIPointerElementExit` - Emits the UIPointerElementExit class event.
- * `OnUIPointerElementClick` - Emits the UIPointerElementClick class event.
- * `OnUIPointerElementDragStart` - Emits the UIPointerElementDragStart class event.
- * `OnUIPointerElementDragEnd` - Emits the UIPointerElementDragEnd class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -5015,16 +4944,27 @@ The RemoveEventSystem resets the Unity EventSystem back to the original state be
 
 The PointerActive method determines if the ui pointer beam should be active based on whether the pointer alias is being held and whether the Hold Button To Use parameter is checked.
 
-#### SelectionButtonActive/0
+#### IsActivationButtonPressed/0
 
-  > `public virtual bool SelectionButtonActive()`
+  > `public virtual bool IsActivationButtonPressed()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the activation button is active.
+
+The IsActivationButtonPressed method is used to determine if the configured activation button is currently in the active state.
+
+#### IsSelectionButtonPressed/0
+
+  > `public virtual bool IsSelectionButtonPressed()`
 
   * Parameters
    * _none_
   * Returns
    * `bool` - Returns true if the selection button is active.
 
-The SelectionButtonActive method is used to determine if the configured selection button is currently in the active state.
+The IsSelectionButtonPressed method is used to determine if the configured selection button is currently in the active state.
 
 #### ValidClick/2
 
@@ -5155,7 +5095,7 @@ All 3D controls extend the `VRTK_Control` abstract class which provides a defaul
 
 Adding the `VRTK_Control_UnityEvents` component to `VRTK_Control` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnValueChanged` - Emits the ValueChanged class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -5246,7 +5186,7 @@ The script will instantiate the required Rigidbody and ConstantForce components 
 
 Adding the `VRTK_Button_UnityEvents` component to `VRTK_Button` object allows access to `UnityEvents` that will react identically to the Class Events.
 
- * `OnPushed` - Emits the Pushed class event.
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Event Payload
 
@@ -5866,6 +5806,17 @@ The GetScriptAliasController method will attempt to get the object that contains
 
 The GetModelAliasController method will attempt to get the object that contains the model for the controller.
 
+#### GetModelAliasControllerHand/1
+
+  > `public static SDK_BaseController.ControllerHand GetModelAliasControllerHand(GameObject givenObject)`
+
+  * Parameters
+   * `GameObject givenObject` - The GameObject that may represent a model alias.
+  * Returns
+   * `SDK_BaseController.ControllerHand` - The enum of the ControllerHand that the given GameObject may represent.
+
+The GetModelAliasControllerHand method will return the hand that the given model alias GameObject is for.
+
 #### GetControllerVelocity/1
 
   > `public static Vector3 GetControllerVelocity(GameObject givenController)`
@@ -6084,6 +6035,80 @@ The TriggerHapticPulse/1 method calls a single haptic pulse call on the controll
 
 The TriggerHapticPulse/3 method calls a haptic pulse for a specified amount of time rather than just a single tick. Each pulse can be separated by providing a `pulseInterval` to pause between each haptic pulse.
 
+#### SetOpacity/3
+
+  > `public static void SetOpacity(GameObject model, float alpha, float transitionDuration = 0f)`
+
+  * Parameters
+   * `GameObject model` - The GameObject to change the renderer opacity on.
+   * `float alpha` - The alpha level to apply to opacity of the controller object. `0f` to `1f`.
+   * `float transitionDuration` - The time to transition from the current opacity to the new opacity.
+  * Returns
+   * _none_
+
+The SetOpacity method allows the opacity of the given GameObject to be changed. A lower alpha value will make the object more transparent, such as `0.5f` will make the controller partially transparent where as `0f` will make the controller completely transparent.
+
+#### SetRendererVisible/2
+
+  > `public static void SetRendererVisible(GameObject model, GameObject ignoredModel = null)`
+
+  * Parameters
+   * `GameObject model` - The GameObject to show the renderers for.
+   * `GameObject ignoredModel` - An optional GameObject to ignore the renderer toggle on.
+  * Returns
+   * _none_
+
+The SetRendererVisible method turns on renderers of a given GameObject. It can also be provided with an optional model to ignore the render toggle on.
+
+#### SetRendererHidden/2
+
+  > `public static void SetRendererHidden(GameObject model, GameObject ignoredModel = null)`
+
+  * Parameters
+   * `GameObject model` - The GameObject to hide the renderers for.
+   * `GameObject ignoredModel` - An optional GameObject to ignore the renderer toggle on.
+  * Returns
+   * _none_
+
+The SetRendererHidden method turns off renderers of a given GameObject. It can also be provided with an optional model to ignore the render toggle on.
+
+#### ToggleRenderer/3
+
+  > `public static void ToggleRenderer(bool state, GameObject model, GameObject ignoredModel = null)`
+
+  * Parameters
+   * `bool state` - If true then the renderers will be enabled, if false the renderers will be disabled.
+   * `GameObject model` - The GameObject to toggle the renderer states of.
+   * `GameObject ignoredModel` - An optional GameObject to ignore the renderer toggle on.
+  * Returns
+   * _none_
+
+The ToggleRenderer method turns on or off the renderers of a given GameObject. It can also be provided with an optional model to ignore the render toggle of.
+
+#### HighlightObject/3
+
+  > `public static void HighlightObject(GameObject model, Color? highlightColor, float fadeDuration = 0f)`
+
+  * Parameters
+   * `GameObject model` - The GameObject to attempt to call the Highlight on.
+   * `Color? highlightColor` - The colour to highlight to.
+   * `float fadeDuration` - The duration in time to fade from the initial colour to the target colour.
+  * Returns
+   * _none_
+
+The HighlightObject method calls the Highlight method on the highlighter attached to the given GameObject with the provided colour.
+
+#### UnhighlightObject/1
+
+  > `public static void UnhighlightObject(GameObject model)`
+
+  * Parameters
+   * `GameObject model` - The GameObject to attempt to call the Unhighlight on.
+  * Returns
+   * _none_
+
+The UnhighlightObject method calls the Unhighlight method on the highlighter attached to the given GameObject.
+
 #### Mod/2
 
   > `public static float Mod(float a, float b)`
@@ -6098,16 +6123,42 @@ The Mod method is used to find the remainder of the sum a/b.
 
 #### FindEvenInactiveGameObject<T>/1
 
-  > `public static GameObject FindEvenInactiveGameObject<T>(string gameObjectName = "") where T : Component`
+  > `public static GameObject FindEvenInactiveGameObject<T>(string gameObjectName = null) where T : Component`
 
   * Type Params
    * `GameObject` - The component type that needs to be on an ancestor of the wanted . Must be a subclass of .
   * Parameters
-   * `string gameObjectName` - The name of the wanted . If it contains a '/' character, this method traverses the hierarchy like a path name.
+   * `string gameObjectName` - The name of the wanted . If it contains a '/' character, this method traverses the hierarchy like a path name, beginning on the game object that has a component of type .
   * Returns
-   * `GameObject` - The  with name  and an ancestor that has a . If no  is found  is returned.
+   * `GameObject` - The  with name  and an ancestor that has a . If no such  is found  is returned.
 
-Finds all  s with a given name and an ancestor that has a specific component. This method returns active as well as inactive  s in the scene. It doesn't return assets. For performance reasons it is recommended to not use this function every frame. Cache the result in a member variable at startup instead.
+Finds the first  with a given name and an ancestor that has a specific component. This method returns active as well as inactive  s in the scene. It doesn't return assets. For performance reasons it is recommended to not use this function every frame. Cache the result in a member variable at startup instead.
+
+#### FindEvenInactiveComponents<T>/0
+
+  > `public static T[] FindEvenInactiveComponents<T>() where T : Object`
+
+  * Type Params
+   * `T[]` - The component type to search for. Must be a subclass of .
+  * Parameters
+   * _none_
+  * Returns
+   * `T[]` - All the found components. If no component is found an empty array is returned.
+
+Finds all components of a given type. This method returns components from active as well as inactive  s in the scene. It doesn't return assets. For performance reasons it is recommended to not use this function every frame. Cache the result in a member variable at startup instead.
+
+#### FindEvenInactiveComponent<T>/0
+
+  > `public static T FindEvenInactiveComponent<T>() where T : Component`
+
+  * Type Params
+   * `T` - The component type to search for. Must be a subclass of .
+  * Parameters
+   * _none_
+  * Returns
+   * `T` - The found component. If no component is found  is returned.
+
+Finds the first component of a given type. This method returns components from active as well as inactive  s in the scene. It doesn't return assets. For performance reasons it is recommended to not use this function every frame. Cache the result in a member variable at startup instead.
 
 ---
 
@@ -6131,6 +6182,7 @@ Then in the component that has a Policy List paramter (e.g. BasicTeleporter has 
 
  * **Operation:** The operation to apply on the list of identifiers.
  * **Check Type:** The element type on the game object to check against.
+ * **Identifiers:** A list of identifiers to check for against the given check type (either tag or script).
 
 ### Class Variables
 
@@ -6191,7 +6243,7 @@ For example, the VRTK_BodyPhysics script can be set to ignore trigger colliders 
   > `public static bool Raycast(VRTK_CustomRaycast customCast, Ray ray, out RaycastHit hitData, LayerMask ignoreLayers, float length = Mathf.Infinity)`
 
   * Parameters
-   * `VRTK_CustomRaycast customCast` - The optional raycast object with customised raycast parameters.
+   * `VRTK_CustomRaycast customCast` - The optional object with customised cast parameters.
    * `Ray ray` - The Ray to cast with.
    * `out RaycastHit hitData` - The raycast hit data.
    * `LayerMask ignoreLayers` - A layermask of layers to ignore from the raycast.
@@ -6201,9 +6253,24 @@ For example, the VRTK_BodyPhysics script can be set to ignore trigger colliders 
 
 The Raycast method is used to generate a raycast either from the given CustomRaycast object or a default Physics.Raycast.
 
-#### CustomCast/3
+#### Linecast/5
 
-  > `public virtual bool CustomCast(Ray ray, out RaycastHit hitData, float length = Mathf.Infinity)`
+  > `public static bool Linecast(VRTK_CustomRaycast customCast, Vector3 startPosition, Vector3 endPosition, out RaycastHit hitData, LayerMask ignoreLayers)`
+
+  * Parameters
+   * `VRTK_CustomRaycast customCast` - The optional object with customised cast parameters.
+   * `Vector3 startPosition` - The world position to start the linecast from.
+   * `Vector3 endPosition` - The world position to end the linecast at.
+   * `out RaycastHit hitData` - The linecast hit data.
+   * `LayerMask ignoreLayers` - A layermask of layers to ignore from the linecast.
+  * Returns
+   * `bool` - Returns true if the linecast successfully collides with a valid object.
+
+The Linecast method is used to generate a linecast either from the given CustomRaycast object or a default Physics.Linecast.
+
+#### CustomRaycast/3
+
+  > `public virtual bool CustomRaycast(Ray ray, out RaycastHit hitData, float length = Mathf.Infinity)`
 
   * Parameters
    * `Ray ray` - The Ray to cast with.
@@ -6212,7 +6279,20 @@ The Raycast method is used to generate a raycast either from the given CustomRay
   * Returns
    * `bool` - Returns true if the raycast successfully collides with a valid object.
 
-The CustomCast method is used to generate a raycast based on the options defined in the CustomRaycast object.
+The CustomRaycast method is used to generate a raycast based on the options defined in the CustomRaycast object.
+
+#### CustomLinecast/3
+
+  > `public virtual bool CustomLinecast(Vector3 startPosition, Vector3 endPosition, out RaycastHit hitData)`
+
+  * Parameters
+   * `Vector3 startPosition` - The world position to start the linecast from.
+   * `Vector3 endPosition` - The world position to end the linecast at.
+   * `out RaycastHit hitData` - The linecast hit data.
+  * Returns
+   * `bool` - Returns true if the line successfully collides with a valid object.
+
+The CustomLinecast method is used to generate a linecast based on the options defined in the CustomRaycast object.
 
 ---
 
@@ -6399,6 +6479,7 @@ Changes one game object's transform to follow another game object's transform.
   * `OnUpdate` - Follow in the Update method.
   * `OnLateUpdate` - Follow in the LateUpdate method.
   * `OnPreRender` - Follow in the OnPreRender method. (This script doesn't have to be attached to a camera.)
+  * `OnPreCull` - Follow in the OnPreCull method. (This script doesn't have to be attached to a camera.)
 
 ---
 
@@ -6457,21 +6538,11 @@ Describes a class that represents an SDK. Only allowed on classes that inherit f
 
 ### Class Variables
 
+ * `public static readonly SDK_DescriptionAttribute Fallback` - The description of a fallback SDK. Default: `new SDK_DescriptionAttribute("Fallback", null)`
  * `public readonly string prettyName` - The pretty name of the SDK. Uniquely identifies the SDK.
  * `public readonly string symbol` - The scripting define symbol needed for the SDK. Needs to be the same as  to add and remove the scripting define symbol automatically using  .
 
 ### Class Methods
-
-#### SDK_DescriptionAttribute/0
-
-  > `public static readonly SDK_DescriptionAttribute Fallback = new SDK_DescriptionAttribute("Fallback", null);`
-
-  * Parameters
-   * _none_
-  * Returns
-   * _none_
-
-The description of a fallback SDK.
 
 #### SDK_DescriptionAttribute/2
 
@@ -7554,6 +7625,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
 
+#### GetDrawAtRuntime/0
+
+  > `public abstract bool GetDrawAtRuntime();`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public abstract void SetDrawAtRuntime(bool value);`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
+
 ---
 
 # Fallback SDK (VRTK/SDK/Fallback)
@@ -8552,6 +8645,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
 
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
+
 ---
 
 # Simulator SDK (VRTK/SDK/Simulator)
@@ -9541,6 +9656,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
    * `bool` - Returns true if the play area size has been auto calibrated and set by external sensors.
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
+
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
 
 ---
 
@@ -10541,6 +10678,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
 
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
+
 ---
 
 # OculusVR SDK (VRTK/SDK/OculusVR)
@@ -11540,6 +11699,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
    * `bool` - Returns true if the play area size has been auto calibrated and set by external sensors.
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
+
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
 
 #### GetAvatar/0
 
@@ -12551,6 +12732,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
 
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
+
 ---
 
 # XimmerseVR SDK (VRTK/SDK/Ximmerse)
@@ -13549,6 +13752,28 @@ The GetPlayAreaBorderThickness returns the thickness of the drawn border for the
    * `bool` - Returns true if the play area size has been auto calibrated and set by external sensors.
 
 The IsPlayAreaSizeCalibrated method returns whether the given play area size has been auto calibrated by external sensors.
+
+#### GetDrawAtRuntime/0
+
+  > `public override bool GetDrawAtRuntime()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the drawn border is being displayed.
+
+The GetDrawAtRuntime method returns whether the given play area drawn border is being displayed.
+
+#### SetDrawAtRuntime/1
+
+  > `public override void SetDrawAtRuntime(bool value)`
+
+  * Parameters
+   * `bool value` - The state of whether the drawn border should be displayed or not.
+  * Returns
+   * _none_
+
+The SetDrawAtRuntime method sets whether the given play area drawn border should be displayed at runtime.
 
 ---
 

@@ -137,7 +137,7 @@ namespace VRTK
             interactableObject = gameObject.transform.parent.gameObject;
             if (interactableObject == null || interactableObject.GetComponent<VRTK_InteractableObject>() == null)
             {
-                Debug.LogWarning("The PanelMenuController could not automatically find the parent VRTK_InteractableObject.");
+                VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_GAMEOBJECT, "PanelMenuController", "VRTK_InteractableObject", "a parent"));
                 return;
             }
 
@@ -147,7 +147,7 @@ namespace VRTK
             canvasObject = gameObject.transform.GetChild(0).gameObject;
             if (canvasObject == null || canvasObject.GetComponent<Canvas>() == null)
             {
-                Debug.LogWarning("The PanelMenuController could not automatically find the required child canvas GameObject.");
+                VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_GAMEOBJECT, "PanelMenuController", "Canvas", "a child"));
             }
         }
 
@@ -157,10 +157,10 @@ namespace VRTK
             {
                 if (rotateTowards == null)
                 {
-                    rotateTowards = VRTK_DeviceFinder.HeadsetCamera().gameObject;
+                    rotateTowards = VRTK_DeviceFinder.HeadsetTransform().gameObject;
                     if (rotateTowards == null)
                     {
-                        Debug.LogWarning("The PanelMenuController could not automatically find an object to rotate towards.");
+                        VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.COULD_NOT_FIND_OBJECT_FOR_ACTION, "PanelMenuController", "an object", "rotate towards"));
                     }
                 }
 
