@@ -83,14 +83,16 @@ namespace VRTK
             if (customLineRenderer != null)
             {
                 tracerLineRenderer = Instantiate(tracer);
-                tracerLineRenderer.name = name + "_LineRenderer";
+                tracerLineRenderer.name = VRTK_SharedMethods.GenerateVRTKObjectName(true, name, "LineRenderer");
                 for (int i = 0; i < tracerLineRenderer.transform.childCount; i++)
                 {
                     Destroy(tracerLineRenderer.transform.GetChild(i).gameObject);
                 }
                 customLineRenderer = tracerLineRenderer.GetComponent<LineRenderer>();
-#if UNITY_5_5_OR_NEWER
+#if UNITY_5_5
                 customLineRenderer.numPositions = frequency;
+#elif UNITY_5_6_OR_NEWER
+                customLineRenderer.positionCount = frequency;
 #else
                 customLineRenderer.SetVertexCount(frequency);
 #endif
@@ -167,6 +169,7 @@ namespace VRTK
         {
             customTracer = false;
             GameObject item = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            item.name = VRTK_SharedMethods.GenerateVRTKObjectName(true, "Sphere");
             Destroy(item.GetComponent<SphereCollider>());
             item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             item.GetComponent<MeshRenderer>().receiveShadows = false;

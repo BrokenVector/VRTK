@@ -2,47 +2,62 @@
 
 A big thank you to the supporters of VRTK via the VRTK Patreon page at https://www.patreon.com/vrtk
 
- * ZnelArts 
+ * Mark Bradley
+ * TreeFortress Games
+ * BinaryLegend 
+ * Eric 
  * Mcdoogleh 
+ * Matt Ostgard
  * cognitiveVR 
- * Thibault 
+ * Adam Salmi
  * Tim Lobes
- * Daniel Shimmyo
- * Alexander Pfyffer
- * Steve Weintraut
- * Thomas Kildren
- * Carl Wolsey
- * Jarrell Norwood
  * Tanner Ochel
- * Will Lingard
- * pj muller
- * TigerLily 
- * Jason Halbach
- * Stephen Elkins
- * Adam Tannir
- * Tuukka Takala
- * Casual Immersions Entertainment
- * Jonathan Linowes
- * Matthew Boynton
- * jamie hurt
- * David Erosa
- * Josh Leong
  * Agatha Yu
- * Joshuha Owen
- * David 
- * Huseyin Gulgen
- * Luke Pierson
- * Eric Wal
- * Juho Salonen
+ * Aldis Sipolins
+ * Michael Hurley
+ * Carl Wolsey
+ * Stephen Eisenhauer
+ * Daniel Shimmyo
  * Jedrzej Jonasz
- * Ben McNelly
+ * Jonathan Linowes
+ * jamie hurt
+ * Thomas Kildren
  * Devon Grandahl
+ * Victor Lew
+ * Jeff Canavan
+ * Eric Vander Wal
+ * Francis Sutton
+ * TigerLily 
+ * Roland 
+ * Hgulgen 
+ * Chris Kirby
+ * Trevor Gibbons
  * ManBearPig 
  * Kenneth Lemieux
+ * Josh Leong
+ * Joey Parr
+ * Axel dabee
+ * braden 
+ * Andy Baker
+ * Ben McNelly
+ * Ian McNab
+ * David Erosa
+ * Juho Salonen
+ * Casual Immersions Entertainment
+ * Joshuha Owen
+ * Jarrell Norwood
+ * Steve Weintraut
+ * Stephen Elkins
+ * David 
+ * Matthew Boynton
+ * Jason Halbach
+ * Kyle Mausser
+ * Niklas DennerstÃ¥hl
+ * Luke Pierson
  * Shawn Pitz
- * Trevor Gibbons
- * Axel Börke
- * Stephen Eisenhauer
- * Aldis Sipolins
+ * Balazs Faludi
+ * Tuukka Takala
+ * Will Lingard
+ * Joe Ferguson
  * Matthew Reis
- * Roland
+ * Adam Tannir

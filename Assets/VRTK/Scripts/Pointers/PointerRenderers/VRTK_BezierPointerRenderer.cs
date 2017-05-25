@@ -16,6 +16,7 @@ namespace VRTK
     ///
     /// `VRTK/Examples/036_Controller_CustomCompoundPointer' shows how to display an object (a teleport beam) only if the teleport location is valid, and can create an animated trail along the tracer curve.
     /// </example>
+    [AddComponentMenu("VRTK/Scripts/Pointers/Pointer Renderers/VRTK_BezierPointerRenderer")]
     public class VRTK_BezierPointerRenderer : VRTK_BasePointerRenderer
     {
         [Header("Bezier Pointer Appearance Settings")]
@@ -74,6 +75,15 @@ namespace VRTK
             base.UpdateRenderer();
         }
 
+        /// <summary>
+        /// The GetPointerObjects returns an array of the auto generated GameObjects associated with the pointer.
+        /// </summary>
+        /// <returns>An array of pointer auto generated GameObjects.</returns>
+        public override GameObject[] GetPointerObjects()
+        {
+            return new GameObject[] { actualContainer, actualCursor };
+        }
+
         protected override void ToggleRenderer(bool pointerState, bool actualState)
         {
             TogglePointerCursor(pointerState, actualState);
@@ -87,7 +97,7 @@ namespace VRTK
 
         protected override void CreatePointerObjects()
         {
-            actualContainer = new GameObject(string.Format("[{0}]BezierPointerRenderer_Container", gameObject.name));
+            actualContainer = new GameObject(VRTK_SharedMethods.GenerateVRTKObjectName(true, gameObject.name, "BezierPointerRenderer_Container"));
             VRTK_PlayerObject.SetPlayerObject(actualContainer, VRTK_PlayerObject.ObjectTypes.Pointer);
             actualContainer.SetActive(false);
 
@@ -159,7 +169,7 @@ namespace VRTK
             if (validLocationObject != null)
             {
                 actualValidLocationObject = Instantiate(validLocationObject);
-                actualValidLocationObject.name = string.Format("[{0}]BezierPointerRenderer_ValidLocation", gameObject.name);
+                actualValidLocationObject.name = VRTK_SharedMethods.GenerateVRTKObjectName(true, gameObject.name, "BezierPointerRenderer_ValidLocation");
                 actualValidLocationObject.transform.SetParent(actualCursor.transform);
                 actualValidLocationObject.layer = LayerMask.NameToLayer("Ignore Raycast");
                 actualValidLocationObject.SetActive(false);
@@ -168,7 +178,7 @@ namespace VRTK
             if (invalidLocationObject != null)
             {
                 actualInvalidLocationObject = Instantiate(invalidLocationObject);
-                actualInvalidLocationObject.name = string.Format("[{0}]BezierPointerRenderer_InvalidLocation", gameObject.name);
+                actualInvalidLocationObject.name = VRTK_SharedMethods.GenerateVRTKObjectName(true, gameObject.name, "BezierPointerRenderer_InvalidLocation");
                 actualInvalidLocationObject.transform.SetParent(actualCursor.transform);
                 actualInvalidLocationObject.layer = LayerMask.NameToLayer("Ignore Raycast");
                 actualInvalidLocationObject.SetActive(false);
@@ -179,7 +189,7 @@ namespace VRTK
         {
             actualCursor = (customCursor ? Instantiate(customCursor) : CreateCursorObject());
             CreateCursorLocations();
-            actualCursor.name = string.Format("[{0}]BezierPointerRenderer_Cursor", gameObject.name);
+            actualCursor.name = VRTK_SharedMethods.GenerateVRTKObjectName(true, gameObject.name, "BezierPointerRenderer_Cursor");
             VRTK_PlayerObject.SetPlayerObject(actualCursor, VRTK_PlayerObject.ObjectTypes.Pointer);
             actualCursor.layer = LayerMask.NameToLayer("Ignore Raycast");
             actualCursor.SetActive(false);
@@ -206,7 +216,9 @@ namespace VRTK
             Ray pointerRaycast = new Ray(origin.position, useForward);
 
             RaycastHit collidedWith;
+#pragma warning disable 0618
             bool hasRayHit = VRTK_CustomRaycast.Raycast(customRaycast, pointerRaycast, out collidedWith, layersToIgnore, calculatedLength);
+#pragma warning restore 0618
 
             float contactDistance = 0f;
             //reset if beam not hitting or hitting new target
@@ -237,7 +249,9 @@ namespace VRTK
             Ray projectedBeamDownRaycast = new Ray(jointPosition, Vector3.down);
             RaycastHit collidedWith;
 
+#pragma warning disable 0618
             bool downRayHit = VRTK_CustomRaycast.Raycast(customRaycast, projectedBeamDownRaycast, out collidedWith, layersToIgnore, maximumLength.y);
+#pragma warning restore 0618
 
             if (!downRayHit || (destinationHit.collider && destinationHit.collider != collidedWith.collider))
             {
@@ -287,13 +301,17 @@ namespace VRTK
                     Ray checkCollisionRay = new Ray(currentPoint, nextPointDirection);
                     RaycastHit checkCollisionHit;
 
+#pragma warning disable 0618
                     if (VRTK_CustomRaycast.Raycast(customRaycast, checkCollisionRay, out checkCollisionHit, layersToIgnore, nextPointDistance))
+#pragma warning restore 0618
                     {
                         Vector3 collisionPoint = checkCollisionRay.GetPoint(checkCollisionHit.distance);
                         Ray downwardCheckRay = new Ray(collisionPoint + (Vector3.up * 0.01f), Vector3.down);
                         RaycastHit downwardCheckHit;
 
+#pragma warning disable 0618
                         if (VRTK_CustomRaycast.Raycast(customRaycast, downwardCheckRay, out downwardCheckHit, layersToIgnore, float.PositiveInfinity))
+#pragma warning restore 0618
                         {
                             destinationHit = downwardCheckHit;
                             newDownPosition = downwardCheckRay.GetPoint(downwardCheckHit.distance); ;

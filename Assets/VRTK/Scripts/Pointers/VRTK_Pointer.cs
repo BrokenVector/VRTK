@@ -20,6 +20,7 @@ namespace VRTK
     ///
     /// It extends the `VRTK_DestinationMarker` to allow for destination events to be emitted when the pointer cursor collides with objects.
     /// </remarks>
+    [AddComponentMenu("VRTK/Scripts/Pointers/VRTK_Pointer")]
     public class VRTK_Pointer : VRTK_DestinationMarker
     {
         [Header("Pointer Activation Settings")]
@@ -79,7 +80,6 @@ namespace VRTK
         /// </summary>
         public event ControllerInteractionEventHandler SelectionButtonReleased;
 
-
         protected VRTK_ControllerEvents.ButtonAlias subscribedActivationButton = VRTK_ControllerEvents.ButtonAlias.Undefined;
         protected VRTK_ControllerEvents.ButtonAlias subscribedSelectionButton = VRTK_ControllerEvents.ButtonAlias.Undefined;
         protected bool currentSelectOnPress;
@@ -89,12 +89,14 @@ namespace VRTK
         protected int currentActivationState;
         protected bool willDeactivate;
         protected bool wasActivated;
-        protected uint controllerIndex;
+        protected VRTK_ControllerReference controllerReference;
         protected VRTK_InteractableObject pointerInteractableObject = null;
         protected Collider currentCollider;
         protected bool canClickOnHover;
         protected bool activationButtonPressed;
         protected bool selectionButtonPressed;
+        protected bool attemptControllerSetup;
+        protected Transform originalCustomOrigin;
 
         public virtual void OnActivationButtonPressed(ControllerInteractionEventArgs e)
         {
@@ -147,15 +149,23 @@ namespace VRTK
         }
 
         /// <summary>
-        /// The PointerEnter method emits a DestinationMarkerEnter event when the pointer enters a valid object.
+        /// The PointerEnter method emits a DestinationMarkerEnter event when the pointer first enters a valid object, it emits a DestinationMarkerHover for every following frame that the pointer stays over the valid object.
         /// </summary>
         /// <param name="givenHit">The valid collision.</param>
         public virtual void PointerEnter(RaycastHit givenHit)
         {
-            if (enabled && givenHit.transform && controllerIndex < uint.MaxValue)
+            if (enabled && givenHit.transform != null && (!ControllerRequired() || VRTK_ControllerReference.IsValid(controllerReference)))
             {
                 SetHoverSelectionTimer(givenHit.collider);
-                OnDestinationMarkerEnter(SetDestinationMarkerEvent(givenHit.distance, givenHit.transform, givenHit, givenHit.point, controllerIndex, false, GetCursorRotation()));
+                DestinationMarkerEventArgs destinationEventArgs = SetDestinationMarkerEvent(givenHit.distance, givenHit.transform, givenHit, givenHit.point, controllerReference, false, GetCursorRotation());
+                if (pointerRenderer != null && givenHit.collider != pointerRenderer.GetDestinationHit().collider)
+                {
+                    OnDestinationMarkerEnter(destinationEventArgs);
+                }
+                else
+                {
+                    OnDestinationMarkerHover(destinationEventArgs);
+                }
                 StartUseAction(givenHit.transform);
             }
         }
@@ -167,9 +177,9 @@ namespace VRTK
         public virtual void PointerExit(RaycastHit givenHit)
         {
             ResetHoverSelectionTimer(givenHit.collider);
-            if (givenHit.transform && controllerIndex < uint.MaxValue)
+            if (givenHit.transform != null && (!ControllerRequired() || VRTK_ControllerReference.IsValid(controllerReference)))
             {
-                OnDestinationMarkerExit(SetDestinationMarkerEvent(givenHit.distance, givenHit.transform, givenHit, givenHit.point, controllerIndex, false, GetCursorRotation()));
+                OnDestinationMarkerExit(SetDestinationMarkerEvent(givenHit.distance, givenHit.transform, givenHit, givenHit.point, controllerReference, false, GetCursorRotation()));
                 StopUseAction();
             }
         }
@@ -239,27 +249,21 @@ namespace VRTK
             }
         }
 
+        protected virtual void Awake()
+        {
+            originalCustomOrigin = customOrigin;
+            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+        }
+
         protected override void OnEnable()
         {
             base.OnEnable();
             VRTK_PlayerObject.SetPlayerObject(gameObject, VRTK_PlayerObject.ObjectTypes.Pointer);
-            customOrigin = (customOrigin == null ? VRTK_SDK_Bridge.GenerateControllerPointerOrigin(gameObject) : customOrigin);
-            SetupController();
-            SetupRenderer();
-            activateDelayTimer = 0f;
-            selectDelayTimer = 0f;
-            hoverDurationTimer = 0f;
-            currentActivationState = 0;
-            wasActivated = false;
-            willDeactivate = false;
-            canClickOnHover = false;
+            SetDefaultValues();
+
             if (NoPointerRenderer())
             {
                 VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_PARAMETER, "VRTK_Pointer", "VRTK_BasePointerRenderer", "Pointer Renderer"));
-            }
-            if (activateOnEnable)
-            {
-                Toggle(true);
             }
         }
 
@@ -270,14 +274,52 @@ namespace VRTK
             UnsubscribeSelectionButton();
         }
 
-        protected virtual void Start()
+        protected virtual void OnDestroy()
         {
-            FindController();
+            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void Update()
         {
+            AttemptControllerSetup();
             CheckButtonSubscriptions();
+            HandleEnabledPointer();
+            UpdateDirectionIndicator();
+        }
+
+        protected virtual void SetDefaultValues()
+        {
+            customOrigin = (originalCustomOrigin == null ? VRTK_SDK_Bridge.GenerateControllerPointerOrigin(gameObject) : originalCustomOrigin);
+            SetupRenderer();
+            activateDelayTimer = 0f;
+            selectDelayTimer = 0f;
+            hoverDurationTimer = 0f;
+            currentActivationState = 0;
+            wasActivated = false;
+            willDeactivate = false;
+            canClickOnHover = false;
+            attemptControllerSetup = true;
+        }
+
+        protected virtual void AttemptControllerSetup()
+        {
+            if (attemptControllerSetup)
+            {
+                if (FindController())
+                {
+                    attemptControllerSetup = false;
+                    SetupController();
+                    SetupRenderer();
+                    if (activateOnEnable)
+                    {
+                        Toggle(true);
+                    }
+                }
+            }
+        }
+
+        protected virtual void HandleEnabledPointer()
+        {
             if (EnabledPointerRenderer())
             {
                 pointerRenderer.InitalizePointer(this, invalidListPolicy, navMeshCheckDistance, headsetPositionCompensation);
@@ -287,11 +329,8 @@ namespace VRTK
                     bool currentPointerVisibility = pointerRenderer.IsVisible();
                     pointerRenderer.ToggleInteraction(currentPointerVisibility);
                 }
-
                 CheckHoverSelect();
             }
-
-            UpdateDirectionIndicator();
         }
 
         protected virtual void UpdateDirectionIndicator()
@@ -314,12 +353,12 @@ namespace VRTK
 
         protected virtual bool EnabledPointerRenderer()
         {
-            return (pointerRenderer && pointerRenderer.enabled);
+            return (pointerRenderer != null && pointerRenderer.enabled);
         }
 
         protected virtual bool NoPointerRenderer()
         {
-            return (!pointerRenderer || !pointerRenderer.enabled);
+            return (pointerRenderer == null || !pointerRenderer.enabled);
         }
 
         protected virtual bool CanActivateOnToggleButton(bool state)
@@ -332,28 +371,35 @@ namespace VRTK
             return result;
         }
 
-        protected virtual void FindController()
+        protected virtual bool ControllerRequired()
+        {
+            return (activationButton != VRTK_ControllerEvents.ButtonAlias.Undefined || selectionButton != VRTK_ControllerEvents.ButtonAlias.Undefined);
+        }
+
+        protected virtual bool FindController()
         {
             if (controller == null)
             {
                 controller = GetComponentInParent<VRTK_ControllerEvents>();
-                SetupController();
             }
 
-            if (controller == null && (activationButton != VRTK_ControllerEvents.ButtonAlias.Undefined || selectionButton != VRTK_ControllerEvents.ButtonAlias.Undefined))
+            if (controller == null && ControllerRequired())
             {
                 VRTK_Logger.Warn(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_GAMEOBJECT, "VRTK_Pointer", "VRTK_ControllerEvents", "the Controller Alias", ". To omit this warning, set the `Activation Button` and `Selection Button` to `Undefined`"));
+                return false;
             }
 
             if (directionIndicator != null)
             {
                 directionIndicator.Initialize(controller);
             }
+
+            return true;
         }
 
         protected virtual void SetupController()
         {
-            if (controller)
+            if (controller != null)
             {
                 CheckButtonMappingConflict();
                 SubscribeSelectionButton();
@@ -424,7 +470,7 @@ namespace VRTK
                 UnsubscribeActivationButton();
             }
 
-            if (controller)
+            if (controller != null)
             {
                 controller.SubscribeToButtonAliasEvent(activationButton, true, DoActivationButtonPressed);
                 controller.SubscribeToButtonAliasEvent(activationButton, false, DoActivationButtonReleased);
@@ -434,7 +480,7 @@ namespace VRTK
 
         protected virtual void UnsubscribeActivationButton()
         {
-            if (controller && subscribedActivationButton != VRTK_ControllerEvents.ButtonAlias.Undefined)
+            if (controller != null && subscribedActivationButton != VRTK_ControllerEvents.ButtonAlias.Undefined)
             {
                 controller.UnsubscribeToButtonAliasEvent(subscribedActivationButton, true, DoActivationButtonPressed);
                 controller.UnsubscribeToButtonAliasEvent(subscribedActivationButton, false, DoActivationButtonReleased);
@@ -447,7 +493,7 @@ namespace VRTK
             OnActivationButtonPressed(controller.SetControllerEvent(ref activationButtonPressed, true));
             if (EnabledPointerRenderer())
             {
-                controllerIndex = e.controllerIndex;
+                controllerReference = e.controllerReference;
                 Toggle(true);
             }
         }
@@ -456,7 +502,7 @@ namespace VRTK
         {
             if (EnabledPointerRenderer())
             {
-                controllerIndex = e.controllerIndex;
+                controllerReference = e.controllerReference;
                 if (IsPointerActive())
                 {
                     Toggle(false);
@@ -472,7 +518,7 @@ namespace VRTK
                 UnsubscribeSelectionButton();
             }
 
-            if (controller)
+            if (controller != null)
             {
                 controller.SubscribeToButtonAliasEvent(selectionButton, true, DoSelectionButtonPressed);
                 controller.SubscribeToButtonAliasEvent(selectionButton, false, DoSelectionButtonReleased);
@@ -484,7 +530,7 @@ namespace VRTK
 
         protected virtual void UnsubscribeSelectionButton()
         {
-            if (controller && subscribedSelectionButton != VRTK_ControllerEvents.ButtonAlias.Undefined)
+            if (controller != null && subscribedSelectionButton != VRTK_ControllerEvents.ButtonAlias.Undefined)
             {
                 controller.UnsubscribeToButtonAliasEvent(selectionButton, true, DoSelectionButtonPressed);
                 controller.UnsubscribeToButtonAliasEvent(selectionButton, false, DoSelectionButtonReleased);
@@ -505,7 +551,7 @@ namespace VRTK
 
         protected virtual void SelectionButtonAction(object sender, ControllerInteractionEventArgs e)
         {
-            controllerIndex = e.controllerIndex;
+            controllerReference = e.controllerReference;
             ExecuteSelectionButtonAction();
         }
 
@@ -520,7 +566,7 @@ namespace VRTK
                 {
                     ResetHoverSelectionTimer(destinationHit.collider);
                     ResetSelectionTimer();
-                    OnDestinationMarkerSet(SetDestinationMarkerEvent(destinationHit.distance, destinationHit.transform, destinationHit, destinationHit.point, controllerIndex, false, GetCursorRotation()));
+                    OnDestinationMarkerSet(SetDestinationMarkerEvent(destinationHit.distance, destinationHit.transform, destinationHit, destinationHit.point, controllerReference, false, GetCursorRotation()));
                 }
             }
         }
@@ -547,7 +593,7 @@ namespace VRTK
 
         protected virtual bool PointerActivatesUseAction(VRTK_InteractableObject givenInteractableObject)
         {
-            return (givenInteractableObject && givenInteractableObject.pointerActivatesUseAction && givenInteractableObject.IsValidInteractableController(controller.gameObject, givenInteractableObject.allowedUseControllers));
+            return (givenInteractableObject != null && givenInteractableObject.pointerActivatesUseAction && givenInteractableObject.IsValidInteractableController(controller.gameObject, givenInteractableObject.allowedUseControllers));
         }
 
         protected virtual void StartUseAction(Transform target)
@@ -573,7 +619,7 @@ namespace VRTK
 
         protected virtual void AttemptUseOnSet(Transform target)
         {
-            if (pointerInteractableObject && target)
+            if (pointerInteractableObject != null && target != null)
             {
                 if (PointerActivatesUseAction(pointerInteractableObject))
                 {

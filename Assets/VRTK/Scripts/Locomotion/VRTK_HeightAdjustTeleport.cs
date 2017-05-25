@@ -14,6 +14,7 @@ namespace VRTK
     ///
     /// `VRTK/Examples/020_CameraRig_MeshTeleporting` shows how the teleportation of a user can also traverse mesh colliders.
     /// </example>
+    [AddComponentMenu("VRTK/Scripts/Locomotion/VRTK_HeightAdjustTeleport")]
     public class VRTK_HeightAdjustTeleport : VRTK_BasicTeleport
     {
         [Header("Height Adjust Settings")]
@@ -53,7 +54,9 @@ namespace VRTK
             Vector3 rayStartPositionOffset = Vector3.up * heightOffset;
             Ray ray = new Ray(tipPosition + rayStartPositionOffset, -playArea.up);
             RaycastHit rayCollidedWith;
+#pragma warning disable 0618
             if (target && VRTK_CustomRaycast.Raycast(customRaycast, ray, out rayCollidedWith, layersToIgnore, Mathf.Infinity))
+#pragma warning restore 0618
             {
                 newY = (tipPosition.y - rayCollidedWith.distance) + heightOffset;
             }
