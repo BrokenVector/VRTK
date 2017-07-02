@@ -152,7 +152,8 @@ namespace VRTK
         }
         private static VRTK_SDKManager _instance;
 
-        [Tooltip("If this is true then the instance of the SDK Manager won't be destroyed on every scene load.")]
+        [Tooltip("**OBSOLETE. STOP USING THIS ASAP!** If this is true then the instance of the SDK Manager won't be destroyed on every scene load.")]
+        [Obsolete("`VRTK_SDKManager.persistOnLoad` has been deprecated and will be removed in a future version of VRTK. See https://github.com/thestonefox/VRTK/issues/1316 for details.")]
         public bool persistOnLoad;
 
         [Tooltip("Determines whether the scripting define symbols required by the installed SDKs are automatically added to and removed from the player settings.")]
@@ -178,12 +179,14 @@ namespace VRTK
         /// The loaded SDK Setup. <see langword="null"/> if no setup is currently loaded.
         /// </summary>
         public VRTK_SDKSetup loadedSetup { get; private set; }
+        private static HashSet<VRTK_SDKInfo> _previouslyUsedSetupInfos = new HashSet<VRTK_SDKInfo>();
 
         /// <summary>
         /// All behaviours that need toggling whenever <see cref="loadedSetup"/> changes.
         /// </summary>
         public ReadOnlyCollection<Behaviour> behavioursToToggleOnLoadedSetupChange { get; private set; }
         private List<Behaviour> _behavioursToToggleOnLoadedSetupChange = new List<Behaviour>();
+        private Dictionary<Behaviour, bool> _behavioursInitialState = new Dictionary<Behaviour, bool>();
 
         /// <summary>
         /// The event invoked whenever the loaded SDK Setup changes.
@@ -365,6 +368,7 @@ namespace VRTK
             if (!_behavioursToToggleOnLoadedSetupChange.Contains(behaviour))
             {
                 _behavioursToToggleOnLoadedSetupChange.Add(behaviour);
+                _behavioursInitialState.Add(behaviour, behaviour.enabled);
             }
 
             if (loadedSetup == null && behaviour.enabled)
@@ -380,6 +384,57 @@ namespace VRTK
         public void RemoveBehaviourToToggleOnLoadedSetupChange(Behaviour behaviour)
         {
             _behavioursToToggleOnLoadedSetupChange.Remove(behaviour);
+        }
+
+        /// <summary>
+        /// Tries to load a valid <see cref="VRTK_SDKSetup"/> from <see cref="setups"/>.
+        /// </summary>
+        public void TryLoadSDKSetupFromList(bool tryUseLastLoadedSetup = true)
+        {
+            int index = 0;
+
+            if (tryUseLastLoadedSetup && _previouslyUsedSetupInfos.Count > 0)
+            {
+                index = Array.FindIndex(
+                    setups,
+                    setup => _previouslyUsedSetupInfos.SetEquals(
+                        new[]
+                        {
+                            setup.systemSDKInfo,
+                            setup.boundariesSDKInfo,
+                            setup.headsetSDKInfo,
+                            setup.controllerSDKInfo
+                        })
+                );
+            }
+            else if (VRSettings.enabled)
+            {
+                // Use the SDK Setup for the current VR Device if it's working already
+                // (may be due to command line argument '-vrmode')
+                index = Array.FindIndex(
+                    setups,
+                    setup => setup.usedVRDeviceNames.Contains(VRSettings.loadedDeviceName)
+                );
+            }
+            else
+            {
+                // If '-vrmode none' was used try to load the respective SDK Setup
+                string[] commandLineArgs = Environment.GetCommandLineArgs();
+                int commandLineArgIndex = Array.IndexOf(commandLineArgs, "-vrmode", 1);
+                if (VRSettings.loadedDeviceName == "None"
+                    || (commandLineArgIndex != -1
+                        && commandLineArgIndex + 1 < commandLineArgs.Length
+                        && commandLineArgs[commandLineArgIndex + 1].ToLowerInvariant() == "none"))
+                {
+                    index = Array.FindIndex(
+                        setups,
+                        setup => setup.usedVRDeviceNames.All(vrDeviceName => vrDeviceName == "None")
+                    );
+                }
+            }
+
+            index = index == -1 ? 0 : index;
+            TryLoadSDKSetup(index, false, setups.ToArray());
         }
 
         /// <summary>
@@ -490,7 +545,7 @@ namespace VRTK
         /// Unloads the currently loaded <see cref="VRTK_SDKSetup"/>, if there is one.
         /// </summary>
         /// <param name="disableVR">Whether to disable VR altogether after unloading the SDK Setup.</param>
-        public void UnloadSDKSetup(bool disableVR = true)
+        public void UnloadSDKSetup(bool disableVR = false)
         {
             if (loadedSetup != null)
             {
@@ -515,6 +570,20 @@ namespace VRTK
             {
                 OnLoadedSetupChanged(new LoadedSetupChangeEventArgs(previousLoadedSetup, null, null));
             }
+
+            _previouslyUsedSetupInfos.Clear();
+            if (previousLoadedSetup != null)
+            {
+                _previouslyUsedSetupInfos.UnionWith(
+                    new[]
+                    {
+                        previousLoadedSetup.systemSDKInfo,
+                        previousLoadedSetup.boundariesSDKInfo,
+                        previousLoadedSetup.headsetSDKInfo,
+                        previousLoadedSetup.controllerSDKInfo
+                    }
+                );
+            }
         }
 
         static VRTK_SDKManager()
@@ -536,41 +605,18 @@ namespace VRTK
 
             if (autoLoadSetup)
             {
-                int index = 0;
-
-                if (VRSettings.enabled)
-                {
-                    // Use the SDK Setup for the current VR Device if it's working already
-                    // (may be due to command line argument '-vrmode')
-                    index = Array.FindIndex(
-                        setups,
-                        setup => setup.usedVRDeviceNames.Contains(VRSettings.loadedDeviceName)
-                    );
-                }
-                else
-                {
-                    // If '-vrmode none' was used try to load the respective SDK Setup
-                    string[] commandLineArgs = Environment.GetCommandLineArgs();
-                    int commandLineArgIndex = Array.IndexOf(commandLineArgs, "-vrmode", 1);
-                    if (commandLineArgIndex != -1
-                        && commandLineArgIndex + 1 < commandLineArgs.Length
-                        && commandLineArgs[commandLineArgIndex + 1].ToLowerInvariant() == "none")
-                    {
-                        index = Array.FindIndex(
-                            setups,
-                            setup => setup.usedVRDeviceNames.All(vrDeviceName => vrDeviceName == "None")
-                        );
-                    }
-                }
-
-                index = index == -1 ? 0 : index;
-                TryLoadSDKSetup(index, false, setups.ToArray());
+                TryLoadSDKSetupFromList();
             }
         }
 
         private void OnDisable()
         {
-            UnloadSDKSetup();
+#pragma warning disable 618
+            if (_instance == this && !persistOnLoad)
+#pragma warning restore 618
+            {
+                UnloadSDKSetup();
+            }
         }
 
         private void CreateInstance()
@@ -580,7 +626,9 @@ namespace VRTK
                 _instance = this;
                 VRTK_SDK_Bridge.InvalidateCaches();
 
+#pragma warning disable 618
                 if (persistOnLoad && Application.isPlaying)
+#pragma warning restore 618
                 {
                     DontDestroyOnLoad(gameObject);
                 }
@@ -663,15 +711,24 @@ namespace VRTK
 
         private void ToggleBehaviours(bool state)
         {
-            IEnumerable<Behaviour> listCopy = _behavioursToToggleOnLoadedSetupChange.ToList();
+            List<Behaviour> listCopy = _behavioursToToggleOnLoadedSetupChange.ToList();
             if (!state)
             {
-                listCopy = listCopy.Reverse();
+                listCopy.Reverse();
             }
 
-            foreach (Behaviour behaviour in listCopy)
+            for (int index = 0; index < listCopy.Count; index++)
             {
-                behaviour.enabled = state;
+                Behaviour behaviour = listCopy[index];
+                if (behaviour == null)
+                {
+                    VRTK_Logger.Error(string.Format("A behaviour to toggle has been destroyed. Have you forgot the corresponding call `VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this)` in the `OnDestroy` method of `{0}`?", behaviour.GetType()));
+                    _behavioursToToggleOnLoadedSetupChange.RemoveAt(state ? index : _behavioursToToggleOnLoadedSetupChange.Count - 1 - index);
+
+                    continue;
+                }
+
+                behaviour.enabled = (state && _behavioursInitialState.ContainsKey(behaviour) ? _behavioursInitialState[behaviour] : state);
             }
         }
 

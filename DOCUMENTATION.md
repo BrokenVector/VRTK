@@ -65,16 +65,21 @@ Use the mouse and keyboard to move around both play area and hands and interacti
  * **Hand Rotation Multiplier:** Adjust hand rotation speed.
  * **Player Move Multiplier:** Adjust player movement speed.
  * **Player Rotation Multiplier:** Adjust player rotation speed.
+ * **Player Sprint Multiplier:** Adjust player sprint speed.
  * **Mouse Movement Key:** Key used to enable mouse input if a button press is required.
  * **Toggle Control Hints:** Key used to toggle control hints on/off.
  * **Change Hands:** Key used to switch between left and righ hand.
  * **Hands On Off:** Key used to switch hands On/Off.
  * **Rotation Position:** Key used to switch between positional and rotational movement.
  * **Change Axis:** Key used to switch between X/Y and X/Z axis.
+ * **Distance Pickup Left:** Key used to distance pickup with left hand.
+ * **Distance Pickup Right:** Key used to distance pickup with right hand.
+ * **Distance Pickup Modifier:** Key used to enable distance pickup.
  * **Move Forward:** Key used to move forward.
  * **Move Left:** Key used to move to the left.
  * **Move Backward:** Key used to move backwards.
  * **Move Right:** Key used to move to the right.
+ * **Sprint:** Key used to sprint.
  * **Trigger Alias:** Key used to simulate trigger button.
  * **Grip Alias:** Key used to simulate grip button.
  * **Touchpad Alias:** Key used to simulate touchpad button.
@@ -154,6 +159,21 @@ There are a number of parameters that can be set on the Prefab which are provide
  * **Line Color:** The colour to use for the line drawn between the tooltip and the destination transform.
  * **Always Face Headset:** If this is checked then the tooltip will be rotated so it always face the headset.
 
+### Class Events
+
+ * `ObjectTooltipReset` - Emitted when the object tooltip is reset.
+ * `ObjectTooltipTextUpdated` - Emitted when the object tooltip text is updated.
+
+### Unity Events
+
+Adding the `VRTK_ObjectTooltip_UnityEvents` component to `VRTK_ObjectTooltip` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `string newText` - The optional new text that is given to the tooltip.
+
 ### Class Methods
 
 #### ResetTooltip/0
@@ -219,6 +239,21 @@ There are a number of parameters that can be set on the Prefab which are provide
  * **Retry Init Max Tries:** The total number of initialisation attempts to make when waiting for the button transforms to initialise.
  * **Retry Init Counter:** The amount of seconds to wait before re-attempting to initialise the controller tooltips if the button transforms have not been initialised yet.
 
+### Class Events
+
+ * `ControllerTooltipOn` - Emitted when the controller tooltip is turned on.
+ * `ControllerTooltipOff` - Emitted when the controller tooltip is turned off.
+
+### Unity Events
+
+Adding the `VRTK_ControllerTooltips_UnityEvents` component to `VRTK_ControllerTooltips` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `VRTK_ControllerTooltips.TooltipButtons element` - The tooltip element being affected.
+
 ### Class Methods
 
 #### ResetTooltip/0
@@ -280,6 +315,21 @@ It's also possible to replace the sphere trigger collider with an alternative tr
 
  * **Is Enabled:** If this is checked then the collider will have it's rigidbody toggled on and off during a collision.
 
+### Class Events
+
+ * `ControllerRigidbodyOn` - Emitted when the controller rigidbody is turned on.
+ * `ControllerRigidbodyOff` - Emitted when the controller rigidbody is turned off.
+
+### Unity Events
+
+Adding the `VRTK_ControllerRigidbodyActivator_UnityEvents` component to `VRTK_ControllerRigidbodyActivator` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * ` interactingObject` - The object that touching the activator.
+
 ---
 
 ## Snap Drop Zone (VRTK_SnapDropZone)
@@ -306,6 +356,7 @@ If the `Use Joint` Snap Type is selected then a custom Joint component is requir
  * **Snap Type:** The Snap Type to apply when a valid interactable object is dropped within the snap zone.
  * **Snap Duration:** The amount of time it takes for the object being snapped to move into the new snapped position, rotation and scale.
  * **Apply Scaling On Snap:** If this is checked then the scaled size of the snap drop zone will be applied to the object that is snapped to it.
+ * **Clone New On Unsnap:** If this is checked then when the snapped object is unsnapped from the drop zone, a clone of the unsnapped object will be snapped back into the drop zone.
  * **Highlight Color:** The colour to use when showing the snap zone is active.
  * **Highlight Always Active:** The highlight object will always be displayed when the snap drop zone is available even if a valid item isn't being hovered over.
  * **Valid Object List Policy:** A specified VRTK_PolicyList to use to determine which interactable objects will be snapped to the snap drop zone on release.
@@ -645,6 +696,7 @@ The destination points can also have a locked state if the `Enable Teleport` fla
  * **Destination Location:** An optional transform to determine the destination location for the destination marker. This can be useful to offset the destination location from the destination point. If this is left empty then the destiantion point transform will be used.
  * **Snap To Point:** If this is checked then after teleporting, the play area will be snapped to the origin of the destination point. If this is false then it's possible to teleport to anywhere within the destination point collider.
  * **Hide Pointer Cursor On Hover:** If this is checked, then the pointer cursor will be hidden when a valid destination point is hovered over.
+ * **Hide Direction Indicator On Hover:** If this is checked, then the pointer direction indicator will be hidden when a valid destination point is hovered over. A pointer direction indicator will always be hidden if snap to rotation is set.
  * **Snap To Rotation:** Determines if the play area will be rotated to the rotation of the destination point upon the destination marker being set.
 
 ### Class Variables
@@ -653,6 +705,20 @@ The destination points can also have a locked state if the `Enable Teleport` fla
   * `NoRotation` - No rotation information will be emitted in the destination set payload.
   * `RotateWithNoHeadsetOffset` - The destination point's rotation will be emitted without taking into consideration the current headset rotation.
   * `RotateWithHeadsetOffset` - The destination point's rotation will be emitted and will take into consideration the current headset rotation.
+
+### Class Events
+
+ * `DestinationPointEnabled` - Emitted when the destination point is enabled.
+ * `DestinationPointDisabled` - Emitted when the destination point is disabled.
+ * `DestinationPointLocked` - Emitted when the destination point is locked.
+ * `DestinationPointUnlocked` - Emitted when the destination point is unlocked.
+ * `DestinationPointReset` - Emitted when the destination point is reset.
+
+### Unity Events
+
+Adding the `VRTK_DestinationPoint_UnityEvents` component to `VRTK_DestinationPoint` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
 
@@ -686,6 +752,18 @@ This can be useful for rotating the play area upon teleporting to face the user 
 ### Inspector Parameters
 
  * **Include Headset Offset:** If this is checked then the reported rotation will include the offset of the headset rotation in relation to the play area.
+ * **Display On Invalid Location:** If this is checked then the direction indicator will be displayed when the location is invalid.
+ * **Use Pointer Color:** If this is checked then the pointer valid/invalid colours will also be used to change the colour of the direction indicator.
+
+### Class Events
+
+ * `PointerDirectionIndicatorPositionSet` - Emitted when the object tooltip is reset.
+
+### Unity Events
+
+Adding the `VRTK_PointerDirectionIndicator_UnityEvents` component to `VRTK_PointerDirectionIndicator` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
 
@@ -722,6 +800,18 @@ The SetPosition method is used to set the world position of the direction indica
    * `Quaternion` - The reported rotation of the direction indicator.
 
 The GetRotation method returns the current reported rotation of the direction indicator.
+
+#### SetMaterialColor/2
+
+  > `public virtual void SetMaterialColor(Color color, bool validity)`
+
+  * Parameters
+   * `Color color` - The colour to update the direction indicatormaterial to.
+   * `bool validity` - Determines if the colour being set is based from a valid location or invalid location.
+  * Returns
+   * _none_
+
+The SetMaterialColor method sets the current material colour on the direction indicator.
 
 ---
 
@@ -982,6 +1072,7 @@ It is utilised by the `VRTK_BasePointer` for dealing with pointer events when th
 ### Inspector Parameters
 
  * **Enable Teleport:** If this is checked then the teleport flag is set to true in the Destination Set event so teleport scripts will know whether to action the new destination.
+ * **Target List Policy:** A specified VRTK_PolicyList to use to determine whether destination targets will be considered valid or invalid.
 
 ### Class Events
 
@@ -1007,17 +1098,6 @@ Adding the `VRTK_DestinationMarker_UnityEvents` component to `VRTK_DestinationMa
  * `VRTK_ControllerReference controllerReference` - The optional reference to the controller controlling the destination marker.
 
 ### Class Methods
-
-#### SetInvalidTarget/1
-
-  > `public virtual void SetInvalidTarget(VRTK_PolicyList list = null)`
-
-  * Parameters
-   * `VRTK_PolicyList list` - The Tag Or Script list policy to check the set operation on.
-  * Returns
-   * _none_
-
-The SetInvalidTarget method is used to set objects that contain the given tag or class matching the name as invalid destination targets. It accepts a VRTK_PolicyList for a custom level of policy management.
 
 #### SetNavMeshCheckDistance/1
 
@@ -1084,9 +1164,9 @@ It extends the `VRTK_DestinationMarker` to allow for destination events to be em
  * **Select After Hover Duration:** The amount of time the pointer can be over the same collider before it automatically attempts to select it. 0f means no selection attempt will be made.
  * **Interact With Objects:** If this is checked then the pointer will be an extension of the controller and able to interact with Interactable Objects.
  * **Grab To Pointer Tip:** If `Interact With Objects` is checked and this is checked then when an object is grabbed with the pointer touching it, the object will attach to the pointer tip and not snap to the controller.
- * **Controller:** The controller that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Controller:** An optional controller that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Interact Use:** An optional InteractUse script that will be used when using interactable objects with pointer. If this is left blank then it will attempt to get the InteractUse script from the same GameObject and if it cannot find one then it will attempt to get it from the attached controller.
  * **Custom Origin:** A custom transform to use as the origin of the pointer. If no pointer origin transform is provided then the transform the script is attached to is used.
- * **Direction Indicator:** A custom VRTK_PointerDirectionIndicator to use to determine the rotation given to the destination set event.
 
 ### Class Events
 
@@ -1094,6 +1174,8 @@ It extends the `VRTK_DestinationMarker` to allow for destination events to be em
  * `ActivationButtonReleased` - Emitted when the pointer activation button is released.
  * `SelectionButtonPressed` - Emitted when the pointer selection button is pressed.
  * `SelectionButtonReleased` - Emitted when the pointer selection button is released.
+ * `PointerStateValid` - Emitted when the pointer is in a valid state.
+ * `PointerStateInvalid` - Emitted when the pointer is in an invalid state.
 
 ### Unity Events
 
@@ -1213,6 +1295,17 @@ The ResetSelectionTimer method is used to reset the pointer selection timer to t
 
 The Toggle method is used to enable or disable the pointer.
 
+#### IsStateValid/0
+
+  > `public virtual bool IsStateValid()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `bool` - Returns true if the pointer is in the valid state (showing the valid colour), returns false if the pointer is in the invalid state (showing the invalid colour).
+
+The IsStateValid method is used to determine if the pointer is currently in a valid state (i.e. on it's valid colour).
+
 ---
 
 ## Play Area Cursor (VRTK_PlayAreaCursor)
@@ -1223,14 +1316,29 @@ The Play Area Cursor is used in conjunction with a Pointer script and displays a
 
 ### Inspector Parameters
 
+ * **Use Pointer Color:** If this is checked then the pointer valid/invalid colours will also be used to change the colour of the play area cursor when colliding/not colliding.
  * **Play Area Cursor Dimensions:** Determines the size of the play area cursor and collider. If the values are left as zero then the Play Area Cursor will be sized to the calibrated Play Area space.
  * **Handle Play Area Cursor Collisions:** If this is checked then if the play area cursor is colliding with any other object then the pointer colour will change to the `Pointer Miss Color` and the `DestinationMarkerSet` event will not be triggered, which will prevent teleporting into areas where the play area will collide.
  * **Headset Out Of Bounds Is Collision:** If this is checked then if the user's headset is outside of the play area cursor bounds then it is considered a collision even if the play area isn't colliding with anything.
  * **Display On Invalid Location:** If this is checked then the play area cursor will be displayed when the location is invalid.
  * **Target List Policy:** A specified VRTK_PolicyList to use to determine whether the play area cursor collisions will be acted upon.
- * **Use Pointer Color:** If this is checked then the pointer hit/miss colours will also be used to change the colour of the play area cursor when colliding/not colliding.
  * **Valid Location Object:** A custom GameObject to use for the play area cursor representation for when the location is valid.
  * **Invalid Location Object:** A custom GameObject to use for the play area cursor representation for when the location is invalid.
+
+### Class Events
+
+ * `PlayAreaCursorStartCollision` - Emitted when the play area collides with another object.
+ * `PlayAreaCursorEndCollision` - Emitted when the play area stops colliding with another object.
+
+### Unity Events
+
+Adding the `VRTK_PlayAreaCursor_UnityEvents` component to `VRTK_PlayAreaCursor` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * ` collidedWith` - The collider that is/was being collided with.
 
 ### Class Methods
 
@@ -1256,12 +1364,13 @@ The HasCollided method returns the state of whether the play area cursor has cur
 
 The SetHeadsetPositionCompensation method determines whether the offset position of the headset from the centre of the play area should be taken into consideration when setting the destination marker. If `true` then it will take the offset position into consideration.
 
-#### SetPlayAreaCursorCollision/1
+#### SetPlayAreaCursorCollision/2
 
-  > `public virtual void SetPlayAreaCursorCollision(bool state)`
+  > `public virtual void SetPlayAreaCursorCollision(bool state, Collider collider = null)`
 
   * Parameters
    * `bool state` - The state of whether to check for play area collisions.
+   * `Collider collider` - The state of whether to check for play area collisions.
   * Returns
    * _none_
 
@@ -1363,6 +1472,7 @@ Specifies the smoothing to be applied to the pointer.
  * **Smooths Rotation:** Whether or not to smooth the rotation of the pointer origin when positioning the pointer tip.
  * **Max Allowed Per Frame Angle Difference:** The maximum allowed angle between the unsmoothed pointer origin and the smoothed pointer origin per frame to use for smoothing.
  * **Playarea Cursor:** An optional Play Area Cursor generator to add to the destination position of the pointer tip.
+ * **Direction Indicator:** A custom VRTK_PointerDirectionIndicator to use to determine the rotation given to the destination set event.
  * **Custom Raycast:** A custom raycaster to use for the pointer's raycasts to ignore.
  * **Pointer Origin Smoothing Settings:** Specifies the smoothing to be applied to the pointer origin when positioning the pointer tip.
  * **Valid Collision Color:** The colour to change the pointer materials when the pointer collides with a valid object. Set to `Color.clear` to bypass changing material colour on valid collision.
@@ -1731,20 +1841,20 @@ The ToggleTeleportEnabled method is used to determine whether the teleporter wil
 
 The ValidLocation method determines if the given target is a location that can be teleported to
 
-#### ForceTeleport/1
+#### Teleport/1
 
-  > `public virtual void ForceTeleport(DestinationMarkerEventArgs teleportArgs)`
+  > `public virtual void Teleport(DestinationMarkerEventArgs teleportArgs)`
 
   * Parameters
    * `DestinationMarkerEventArgs teleportArgs` - The pseudo Destination Marker event for the teleport action.
   * Returns
    * _none_
 
-The ForceTeleport/1 method forces the teleport to update position without needing to listen for a Destination Marker event.
+The Teleport/1 method calls the teleport to update position without needing to listen for a Destination Marker event.
 
-#### ForceTeleport/4
+#### Teleport/4
 
-  > `public virtual void ForceTeleport(Transform target, Vector3 destinationPosition, Quaternion? destinationRotation = null, bool forceDestinationPosition = false)`
+  > `public virtual void Teleport(Transform target, Vector3 destinationPosition, Quaternion? destinationRotation = null, bool forceDestinationPosition = false)`
 
   * Parameters
    * `Transform target` - The Transform of the destination object.
@@ -1754,7 +1864,19 @@ The ForceTeleport/1 method forces the teleport to update position without needin
   * Returns
    * _none_
 
-The ForceTeleport/3 method forces the teleport to update position without needing to listen for a Destination Marker event. It will build a destination marker out of the provided parameters.
+The Teleport/4 method calls the teleport to update position without needing to listen for a Destination Marker event. It will build a destination marker out of the provided parameters.
+
+#### ForceTeleport/2
+
+  > `public virtual void ForceTeleport(Vector3 destinationPosition, Quaternion? destinationRotation = null)`
+
+  * Parameters
+   * `Vector3 destinationPosition` - The world position to teleport to.
+   * `Quaternion? destinationRotation` - The world rotation to teleport to.
+  * Returns
+   * _none_
+
+The ForceTeleport method forces the position to update to a given destination and ignores any target checking or floor adjustment.
 
 ### Example
 
@@ -1771,6 +1893,7 @@ The height adjust teleporter extends the basic teleporter and allows for the y p
 
 ### Inspector Parameters
 
+ * **Snap To Nearest Floor:** If this is checked, then the teleported Y position will snap to the nearest available below floor. If it is unchecked, then the teleported Y position will be where ever the destination Y position is.
  * **Custom Raycast:** A custom raycaster to use when raycasting to find floors.
 
 ### Example
@@ -1943,7 +2066,7 @@ If the controlled object is the play area and `VRTK_BodyPhysics` is also availab
 
 Move In Place allows the user to move the play area by calculating the y-movement of the user's headset and/or controllers. The user is propelled forward the more they are moving. This simulates moving in game by moving in real life.
 
-> This locomotion method is based on Immersive Movement, originally created by Highsight.
+> This locomotion method is based on Immersive Movement, originally created by Highsight. Thanks to KJack (author of Arm Swinger) for additional work.
 
 ### Inspector Parameters
 
@@ -1958,6 +2081,7 @@ Move In Place allows the user to move the play area by calculating the y-movemen
  * **Falling Deceleration:** The speed in which the play area slows down to a complete stop when the user is falling.
  * **Smart Decouple Threshold:** The degree threshold that all tracked objects (controllers, headset) must be within to change direction when using the Smart Decoupling Direction Method.
  * **Sensitivity:** The maximum amount of movement required to register in the virtual world.  Decreasing this will increase acceleration, and vice versa.
+ * **Body Physics:** An optional Body Physics script to check for potential collisions in the moving direction. If any potential collision is found then the move will not take place. This can help reduce collision tunnelling.
 
 ### Class Variables
 
@@ -2026,6 +2150,8 @@ The Player Climb allows player movement based on grabbing of `VRTK_InteractableO
  * **Use Player Scale:** Will scale movement up and down based on the player transform's scale.
  * **Body Physics:** The VRTK Body Physics script to use for dealing with climbing and falling. If this is left blank then the script will need to be applied to the same GameObject.
  * **Teleporter:** The VRTK Teleport script to use when snapping to nearest floor on release. If this is left blank then a Teleport script will need to be applied to the same GameObject.
+ * **Headset Collision:** The VRTK Headset Collision script to use for determining if the user is climbing inside a collidable object. If this is left blank then the script will need to be applied to the same GameObject.
+ * **Position Rewind:** The VRTK Position Rewind script to use for dealing resetting invalid positions. If this is left blank then the script will need to be applied to the same GameObject.
 
 ### Class Events
 
@@ -2120,6 +2246,7 @@ The effect is a smooth sliding motion in forward and sideways directions to simu
  * **Deceleration:** The rate of speed deceleration when the axis is no longer being changed.
  * **Falling Deceleration:** The rate of speed deceleration when the axis is no longer being changed and the object is falling.
  * **Speed Multiplier:** The speed multiplier to be applied when the modifier button is pressed.
+ * **Body Physics:** An optional Body Physics script to check for potential collisions in the moving direction. If any potential collision is found then the move will not take place. This can help reduce collision tunnelling.
 
 ### Example
 
@@ -2192,6 +2319,7 @@ The effect is a immediate snap to a new position in the given direction.
  * **Warp Delay:** The amount of time required to pass before another warp can be carried out.
  * **Floor Height Tolerance:** The height different in floor allowed to be a valid warp.
  * **Blink Transition Speed:** The speed for the headset to fade out and back in. Having a blink between warps can reduce nausia.
+ * **Body Physics:** An optional Body Physics script to check for potential collisions in the moving direction. If any potential collision is found then the move will not take place. This can help reduce collision tunnelling.
 
 ### Example
 
@@ -2673,6 +2801,28 @@ The Interact Controller Appearance script is attached on the same GameObject as 
  * **Hide Controller On Use:** Hides the controller model when a valid use occurs.
  * **Hide Delay On Use:** The amount of seconds to wait before hiding the controller on use.
 
+### Class Events
+
+ * `ControllerHidden` - Emitted when the interacting object is hidden.
+ * `ControllerVisible` - Emitted when the interacting object is shown.
+ * `HiddenOnTouch` - Emitted when the interacting object is hidden on touch.
+ * `VisibleOnTouch` - Emitted when the interacting object is shown on untouch.
+ * `HiddenOnGrab` - Emitted when the interacting object is hidden on grab.
+ * `VisibleOnGrab` - Emitted when the interacting object is shown on ungrab.
+ * `HiddenOnUse` - Emitted when the interacting object is hidden on use.
+ * `VisibleOnUse` - Emitted when the interacting object is shown on unuse.
+
+### Unity Events
+
+Adding the `VRTK_InteractControllerAppearance_UnityEvents` component to `VRTK_InteractControllerAppearance` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `GameObject interactingObject` - The object that is interacting.
+ * `GameObject ignoredObject` - The object that is being ignored.
+
 ### Class Methods
 
 #### ToggleControllerOnTouch/3
@@ -2736,8 +2886,12 @@ A custom collider can be provided by the Custom Rigidbody Object parameter.
 
 ### Class Events
 
+ * `ControllerStartTouchInteractableObject` - Emitted when the touch of a valid object has started.
  * `ControllerTouchInteractableObject` - Emitted when a valid object is touched.
+ * `ControllerStartUntouchInteractableObject` - Emitted when the untouch of a valid object has started.
  * `ControllerUntouchInteractableObject` - Emitted when a valid object is no longer being touched.
+ * `ControllerRigidbodyActivated` - Emitted when the controller rigidbody is activated.
+ * `ControllerRigidbodyDeactivated` - Emitted when the controller rigidbody is deactivated.
 
 ### Unity Events
 
@@ -2879,7 +3033,9 @@ The interactable objects require a collider to activate the trigger and a rigidb
 
  * `GrabButtonPressed` - Emitted when the grab button is pressed.
  * `GrabButtonReleased` - Emitted when the grab button is released.
+ * `ControllerStartGrabInteractableObject` - Emitted when a grab of a valid object is started.
  * `ControllerGrabInteractableObject` - Emitted when a valid object is grabbed.
+ * `ControllerStartUngrabInteractableObject` - Emitted when a ungrab of a valid object is started.
  * `ControllerUngrabInteractableObject` - Emitted when a valid object is released from being grabbed.
 
 ### Unity Events
@@ -2969,7 +3125,9 @@ If a valid interactable object is usable then pressing the set `Use` button on t
 
  * `UseButtonPressed` - Emitted when the use toggle alias button is pressed.
  * `UseButtonReleased` - Emitted when the use toggle alias button is released.
+ * `ControllerStartUseInteractableObject` - Emitted when a use of a valid object is started.
  * `ControllerUseInteractableObject` - Emitted when a valid object starts being used.
+ * `ControllerStartUnuseInteractableObject` - Emitted when a unuse of a valid object is started.
  * `ControllerUnuseInteractableObject` - Emitted when a valid object stops being used.
 
 ### Unity Events
@@ -3147,10 +3305,10 @@ The IsUsing method is used to determine if the object is currently being used.
 
 #### StartTouching/1
 
-  > `public virtual void StartTouching(GameObject currentTouchingObject)`
+  > `public virtual void StartTouching(VRTK_InteractTouch currentTouchingObject = null)`
 
   * Parameters
-   * `GameObject currentTouchingObject` - The game object that is currently touching this object.
+   * `VRTK_InteractTouch currentTouchingObject` - The object that is currently touching this object.
   * Returns
    * _none_
 
@@ -3158,10 +3316,10 @@ The StartTouching method is called automatically when the object is touched init
 
 #### StopTouching/1
 
-  > `public virtual void StopTouching(GameObject previousTouchingObject)`
+  > `public virtual void StopTouching(VRTK_InteractTouch previousTouchingObject = null)`
 
   * Parameters
-   * `GameObject previousTouchingObject` - The game object that was previously touching this object.
+   * `VRTK_InteractTouch previousTouchingObject` - The object that was previously touching this object.
   * Returns
    * _none_
 
@@ -3169,10 +3327,10 @@ The StopTouching method is called automatically when the object has stopped bein
 
 #### Grabbed/1
 
-  > `public virtual void Grabbed(GameObject currentGrabbingObject)`
+  > `public virtual void Grabbed(VRTK_InteractGrab currentGrabbingObject = null)`
 
   * Parameters
-   * `GameObject currentGrabbingObject` - The game object that is currently grabbing this object.
+   * `VRTK_InteractGrab currentGrabbingObject` - The object that is currently grabbing this object.
   * Returns
    * _none_
 
@@ -3180,10 +3338,10 @@ The Grabbed method is called automatically when the object is grabbed initially.
 
 #### Ungrabbed/1
 
-  > `public virtual void Ungrabbed(GameObject previousGrabbingObject)`
+  > `public virtual void Ungrabbed(VRTK_InteractGrab previousGrabbingObject = null)`
 
   * Parameters
-   * `GameObject previousGrabbingObject` - The game object that was previously grabbing this object.
+   * `VRTK_InteractGrab previousGrabbingObject` - The object that was previously grabbing this object.
   * Returns
    * _none_
 
@@ -3191,10 +3349,10 @@ The Ungrabbed method is called automatically when the object has stopped being g
 
 #### StartUsing/1
 
-  > `public virtual void StartUsing(GameObject currentUsingObject)`
+  > `public virtual void StartUsing(VRTK_InteractUse currentUsingObject = null)`
 
   * Parameters
-   * `GameObject currentUsingObject` - The game object that is currently using this object.
+   * `VRTK_InteractUse currentUsingObject` - The object that is currently using this object.
   * Returns
    * _none_
 
@@ -3202,10 +3360,10 @@ The StartUsing method is called automatically when the object is used initially.
 
 #### StopUsing/1
 
-  > `public virtual void StopUsing(GameObject previousUsingObject)`
+  > `public virtual void StopUsing(VRTK_InteractUse previousUsingObject = null)`
 
   * Parameters
-   * `GameObject previousUsingObject` - The game object that was previously using this object.
+   * `VRTK_InteractUse previousUsingObject` - The object that was previously using this object.
   * Returns
    * _none_
 
@@ -3306,9 +3464,20 @@ The GetSecondaryGrabbingObject method is used to return the game object that is 
   * Parameters
    * _none_
   * Returns
-   * `GameObject` - The game object of what is using the current object.
+   * `GameObject` - The GameObject of what is using the current object.
 
-The GetUsingObject method is used to return the game object that is currently using this object.
+The GetUsingObject method is used to return the GameObject that is currently using this object.
+
+#### GetUsingScript/0
+
+  > `public virtual VRTK_InteractUse GetUsingScript()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `VRTK_InteractUse` - The InteractUse script of the object that is using the current object.
+
+The GetUsingScript method is used to return the InteractUse script that is currently using this object.
 
 #### IsValidInteractableController/2
 
@@ -3582,6 +3751,22 @@ The Interact Haptics script is attached on the same GameObject as an Interactabl
  * **Duration On Use:** Denotes how long the rumble in the controller will last on use.
  * **Interval On Use:** Denotes interval betweens rumble in the controller on use.
 
+### Class Events
+
+ * `InteractHapticsTouched` - Emitted when the haptics are from a touch.
+ * `InteractHapticsGrabbed` - Emitted when the haptics are from a grab.
+ * `InteractHapticsUsed` - Emitted when the haptics are from a use.
+
+### Unity Events
+
+Adding the `VRTK_InteractHaptics_UnityEvents` component to `VRTK_InteractHaptics` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `VRTK_ControllerReference controllerReference` - The reference to the controller to perform haptics on.
+
 ### Class Methods
 
 #### HapticsOnTouch/1
@@ -3633,6 +3818,16 @@ It is possible to automatically grab an Interactable Object to a specific contro
  * **Always Clone On Enable:** If `Clone Grabbed Object` is checked and this is checked, then whenever this script is disabled and re-enabled, it will always create a new clone of the object to grab. If this is false then the original cloned object will attempt to be grabbed again. If the original cloned object no longer exists then a new clone will be created.
  * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
  * **Interact Grab:** The Interact Grab to listen for grab actions on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+
+### Class Events
+
+ * `ObjectAutoGrabCompleted` - Emitted when the object auto grab has completed successfully.
+
+### Unity Events
+
+Adding the `VRTK_ObjectAutoGrab_UnityEvents` component to `VRTK_ObjectAutoGrab` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
 
 ### Class Methods
 
@@ -4707,6 +4902,7 @@ The Headset Collision script will automatically create a script on the headset t
 
 ### Inspector Parameters
 
+ * **Ignore Trigger Colliders:** If this is checked then the headset collision will ignore colliders set to `Is Trigger = true`.
  * **Collider Radius:** The radius of the auto generated sphere collider for detecting collisions on the headset.
  * **Target List Policy:** A specified VRTK_PolicyList to use to determine whether any objects will be acted upon by the Headset Collision.
 
@@ -5000,6 +5196,8 @@ To allow for peeking over a ledge and not falling, a fall restiction can happen 
  * **Floor Height Tolerance:** The amount the `y` position needs to change by between the current floor `y` position and the previous floor `y` position before a change in floor height is considered to have occurred. A higher value here will mean that a `Drop To Floor` will be less likely to happen if the `y` of the floor beneath the user hasn't changed as much as the given threshold.
  * **Fall Check Precision:** The amount of rounding on the play area Y position to be applied when checking if falling is occuring.
  * **Teleporter:** The VRTK Teleport script to use when snapping to floor. If this is left blank then a Teleport script will need to be applied to the same GameObject.
+ * **Custom Body Collider Container:** A GameObject to represent a custom body collider container. It should contain a collider component that will be used for detecting body collisions. If one isn't provided then it will be auto generated.
+ * **Custom Foot Collider Container:** A GameObject to represent a custom foot collider container. It should contain a collider component that will be used for detecting step collisions. If one isn't provided then it will be auto generated.
 
 ### Class Variables
 
@@ -5015,9 +5213,13 @@ To allow for peeking over a ledge and not falling, a fall restiction can happen 
  * `StartFalling` - Emitted when a fall begins.
  * `StopFalling` - Emitted when a fall ends.
  * `StartMoving` - Emitted when movement in the play area begins.
- * `StopMoving` - Emitted when movement in the play area ends
- * `StartColliding` - Emitted when the body collider starts colliding with another game object
- * `StopColliding` - Emitted when the body collider stops colliding with another game object
+ * `StopMoving` - Emitted when movement in the play area ends.
+ * `StartColliding` - Emitted when the body collider starts colliding with another game object.
+ * `StopColliding` - Emitted when the body collider stops colliding with another game object.
+ * `StartLeaning` - Emitted when the body collider starts leaning over another game object.
+ * `StopLeaning` - Emitted when the body collider stops leaning over another game object.
+ * `StartTouchingGround` - Emitted when the body collider starts touching the ground.
+ * `StopTouchingGround` - Emitted when the body collider stops touching the ground.
 
 ### Unity Events
 
@@ -5028,6 +5230,7 @@ Adding the `VRTK_BodyPhysics_UnityEvents` component to `VRTK_BodyPhysics` object
 ### Event Payload
 
  * `GameObject target` - The target the event is dealing with.
+ * `Collider collider` - An optional collider that the body physics is colliding with.
 
 ### Class Methods
 
@@ -5076,6 +5279,17 @@ The ToggleOnGround method sets whether the body is considered on the ground or n
    * _none_
 
 The PreventSnapToFloor method sets whether the snap to floor mechanic should be used.
+
+#### ForceSnapToFloor/0
+
+  > `public virtual void ForceSnapToFloor()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The ForceSnapToFloor method disables the prevent snap to floor and forces the snap to nearest floor action.
 
 #### IsFalling/0
 
@@ -5177,6 +5391,29 @@ The ResetFalling method force stops any falling states and conditions that might
 
 The GetBodyColliderContainer method returns the auto generated GameObject that contains the body colliders.
 
+#### GetFootColliderContainer/0
+
+  > `public virtual GameObject GetFootColliderContainer()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `GameObject` - The auto generated foot collider GameObject.
+   * `GameObject` -
+
+The GetFootColliderContainer method returns the auto generated GameObject that contains the foot colliders.
+
+#### GetCurrentCollidingObject/0
+
+  > `public virtual GameObject GetCurrentCollidingObject()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `GameObject` - The GameObject that is colliding with the body physics colliders.
+
+The GetCurrentCollidingObject method returns the object that the body physics colliders are currently colliding with.
+
 #### ResetIgnoredCollisions/0
 
   > `public virtual void ResetIgnoredCollisions()`
@@ -5187,6 +5424,18 @@ The GetBodyColliderContainer method returns the auto generated GameObject that c
    * _none_
 
 The ResetIgnoredCollisions method is used to clear any stored ignored colliders in case the `Ignore Collisions On` array parameter is changed at runtime. This needs to be called manually if changes are made at runtime.
+
+#### SweepCollision/2
+
+  > `public virtual bool SweepCollision(Vector3 direction, float maxDistance)`
+
+  * Parameters
+   * `Vector3 direction` - The direction to test for the potential collision.
+   * `float maxDistance` - The maximum distance to check for a potential collision.
+  * Returns
+   * `bool` - Returns true if a collision will occur on the given direction over the given maxium distance. Returns false if there is no collision about to happen.
+
+The SweepCollision method tests to see if a collision will occur with the body collider in a given direction and distance.
 
 ### Example
 
@@ -5203,6 +5452,7 @@ The Position Rewind script is used to reset the user back to a good known standi
 ### Inspector Parameters
 
  * **Collision Detector:** The colliders to determine if a collision has occured for the rewind to be actioned.
+ * **Ignore Trigger Colliders:** If this is checked then the collision detector will ignore colliders set to `Is Trigger = true`.
  * **Rewind Delay:** The amount of time from original headset collision until the rewind to the last good known position takes place.
  * **Pushback Distance:** The additional distance to push the play area back upon rewind to prevent being right next to the wall again.
  * **Crouch Threshold:** The threshold to determine how low the headset has to be before it is considered the user is crouching. The last good position will only be recorded in a non-crouching position.
@@ -5217,6 +5467,45 @@ The Position Rewind script is used to reset the user back to a good known standi
   * `HeadsetOnly` - Listen for collisions on the headset collider only.
   * `BodyOnly` - Listen for collisions on the body physics collider only.
   * `HeadsetAndBody` - Listen for collisions on both the headset collider and body physics collider.
+
+### Class Events
+
+ * `PositionRewindToSafe` - Emitted when the draggable item is successfully dropped.
+
+### Unity Events
+
+Adding the `VRTK_PositionRewind_UnityEvents` component to `VRTK_PositionRewind` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `Vector3 collidedPosition` - The position of the play area when it collded.
+ * `Vector3 resetPosition` - The position of the play area when it has been rewinded to a safe position.
+
+### Class Methods
+
+#### SetLastGoodPosition/0
+
+  > `public virtual void SetLastGoodPosition()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The SetLastGoodPosition method stores the current valid play area and headset position.
+
+#### RewindPosition/0
+
+  > `public virtual void RewindPosition()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The RewindPosition method resets the play area position to the last known good position of the play area.
 
 ### Example
 
@@ -5428,6 +5717,21 @@ If a UI Draggable item is set to `Restrict To Drop Zone = true` then the UI Drag
 ### Class Variables
 
  * `public GameObject validDropZone` - The current valid drop zone the dragged element is hovering over.
+
+### Class Events
+
+ * `DraggableItemDropped` - Emitted when the draggable item is successfully dropped.
+ * `DraggableItemReset` - Emitted when the draggable item is reset.
+
+### Unity Events
+
+Adding the `VRTK_UIDraggableItem_UnityEvents` component to `VRTK_UIDraggableItem` object allows access to `UnityEvents` that will react identically to the Class Events.
+
+ * All C# delegate events are mapped to a Unity Event with the `On` prefix. e.g. `MyEvent` -> `OnMyEvent`.
+
+### Event Payload
+
+ * `GameObject target` - The target the item is dragged onto.
 
 ### Example
 
@@ -5851,6 +6155,7 @@ A collection of scripts that provide useful functionality to aid the creation pr
  * [Rigidbody Follow](#rigidbody-follow-vrtk_rigidbodyfollow)
  * [Transform Follow](#transform-follow-vrtk_transformfollow)
  * [SDK Object Alias](#sdk-object-alias-vrtk_sdkobjectalias)
+ * [SDK Transform Modify](#sdk-transform-modify-vrtk_sdktransformmodify)
  * [Simulating Headset Movement](#simulating-headset-movement-vrtk_simulator)
 
 ---
@@ -5865,7 +6170,6 @@ and the method info of the method the attribute is defined on.
 
 ### Inspector Parameters
 
- * **Persist On Load:** If this is true then the instance of the SDK Manager won't be destroyed on every scene load.
  * **Auto Manage Script Defines:** Determines whether the scripting define symbols required by the installed SDKs are automatically added to and removed from the player settings.
  * **Script Alias Left Controller:** A reference to the GameObject that contains any scripts that apply to the Left Hand Controller.
  * **Script Alias Right Controller:** A reference to the GameObject that contains any scripts that apply to the Right Hand Controller.
@@ -5967,6 +6271,17 @@ Adds a behaviour to the list of behaviours to toggle when  changes.
 
 Removes a behaviour of the list of behaviours to toggle when  changes.
 
+#### TryLoadSDKSetupFromList/1
+
+  > `public void TryLoadSDKSetupFromList(bool tryUseLastLoadedSetup = true)`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+Tries to load a valid  from  .
+
 #### TryLoadSDKSetup/3
 
   > `public void TryLoadSDKSetup(int startIndex, bool tryToReinitialize, params VRTK_SDKSetup[] sdkSetups)`
@@ -5993,7 +6308,7 @@ Sets a given  as the loaded SDK Setup to be able to use it when populating objec
 
 #### UnloadSDKSetup/1
 
-  > `public void UnloadSDKSetup(bool disableVR = true)`
+  > `public void UnloadSDKSetup(bool disableVR = false)`
 
   * Parameters
    * `bool disableVR` - Whether to disable VR altogether after unloading the SDK Setup.
@@ -6152,6 +6467,17 @@ The Device Finder offers a collection of static methods that can be called to fi
   * `ViveMV` - A specific version of the HTC Vive headset, the first consumer version.
 
 ### Class Methods
+
+#### GetCurrentControllerType/0
+
+  > `public static SDK_BaseController.ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `SDK_BaseController.ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
 
 #### GetControllerIndex/1
 
@@ -6386,6 +6712,17 @@ The HeadsetTransform method is used to retrieve the transform for the VR Headset
 
 The HeadsetCamera method is used to retrieve the transform for the VR Camera in the scene.
 
+#### ResetHeadsetTypeCache/0
+
+  > `public static void ResetHeadsetTypeCache()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * _none_
+
+The ResetHeadsetTypeCache resets the cache holding the current headset type value.
+
 #### GetHeadsetType/1
 
   > `public static Headsets GetHeadsetType(bool summary = false)`
@@ -6613,6 +6950,29 @@ The Vector2ShallowCompare method compares two given Vector2 objects based on the
 
 The NumberPercent method is used to determine the percentage of a given value.
 
+#### SetGlobalScale/2
+
+  > `public static void SetGlobalScale(this Transform transform, Vector3 globalScale)`
+
+  * Parameters
+   * `this Transform transform` - The reference to the transform to scale.
+   * `Vector3 globalScale` - A Vector3 of a global scale to apply to the given transform.
+  * Returns
+   * _none_
+
+The SetGlobalScale method is used to set a transform scale based on a global scale instead of a local scale.
+
+#### GetTypeUnknownAssembly/1
+
+  > `public static Type GetTypeUnknownAssembly(string typeName)`
+
+  * Parameters
+   * `string typeName` - The name of the type to get.
+  * Returns
+   * `Type` - The Type, or null if none is found.
+
+The GetTypeUnknownAssembly method is used to find a Type without knowing the exact assembly it is in.
+
 ---
 
 ## Policy List (VRTK_PolicyList)
@@ -6691,9 +7051,9 @@ For example, the VRTK_BodyPhysics script can be set to ignore trigger colliders 
 
 ### Class Methods
 
-#### Raycast/5
+#### Raycast/6
 
-  > `public static bool Raycast(VRTK_CustomRaycast customCast, Ray ray, out RaycastHit hitData, LayerMask ignoreLayers, float length = Mathf.Infinity)`
+  > `public static bool Raycast(VRTK_CustomRaycast customCast, Ray ray, out RaycastHit hitData, LayerMask ignoreLayers, float length = Mathf.Infinity, QueryTriggerInteraction affectTriggers = QueryTriggerInteraction.UseGlobal)`
 
   * Parameters
    * `VRTK_CustomRaycast customCast` - The optional object with customised cast parameters.
@@ -6701,14 +7061,15 @@ For example, the VRTK_BodyPhysics script can be set to ignore trigger colliders 
    * `out RaycastHit hitData` - The raycast hit data.
    * `LayerMask ignoreLayers` - A layermask of layers to ignore from the raycast.
    * `float length` - The maximum length of the raycast.
+   * `QueryTriggerInteraction affectTriggers` - Determines the trigger interaction level of the cast.
   * Returns
    * `bool` - Returns true if the raycast successfully collides with a valid object.
 
 The Raycast method is used to generate a raycast either from the given CustomRaycast object or a default Physics.Raycast.
 
-#### Linecast/5
+#### Linecast/6
 
-  > `public static bool Linecast(VRTK_CustomRaycast customCast, Vector3 startPosition, Vector3 endPosition, out RaycastHit hitData, LayerMask ignoreLayers)`
+  > `public static bool Linecast(VRTK_CustomRaycast customCast, Vector3 startPosition, Vector3 endPosition, out RaycastHit hitData, LayerMask ignoreLayers, QueryTriggerInteraction affectTriggers = QueryTriggerInteraction.UseGlobal)`
 
   * Parameters
    * `VRTK_CustomRaycast customCast` - The optional object with customised cast parameters.
@@ -6716,10 +7077,30 @@ The Raycast method is used to generate a raycast either from the given CustomRay
    * `Vector3 endPosition` - The world position to end the linecast at.
    * `out RaycastHit hitData` - The linecast hit data.
    * `LayerMask ignoreLayers` - A layermask of layers to ignore from the linecast.
+   * `QueryTriggerInteraction affectTriggers` - Determines the trigger interaction level of the cast.
   * Returns
    * `bool` - Returns true if the linecast successfully collides with a valid object.
 
 The Linecast method is used to generate a linecast either from the given CustomRaycast object or a default Physics.Linecast.
+
+#### CapsuleCast/9
+
+  > `public static bool CapsuleCast(VRTK_CustomRaycast customCast, Vector3 point1, Vector3 point2, float radius, Vector3 direction, float maxDistance, out RaycastHit hitData, LayerMask ignoreLayers, QueryTriggerInteraction affectTriggers = QueryTriggerInteraction.UseGlobal)`
+
+  * Parameters
+   * `VRTK_CustomRaycast customCast` - The optional object with customised cast parameters.
+   * `Vector3 point1` - The center of the sphere at the start of the capsule.
+   * `Vector3 point2` - The center of the sphere at the end of the capsule.
+   * `float radius` - The radius of the capsule.
+   * `Vector3 direction` - The direction into which to sweep the capsule.
+   * `float maxDistance` - The max length of the sweep.
+   * `out RaycastHit hitData` - The linecast hit data.
+   * `LayerMask ignoreLayers` - A layermask of layers to ignore from the linecast.
+   * `QueryTriggerInteraction affectTriggers` - Determines the trigger interaction level of the cast.
+  * Returns
+   * `bool` - Returns true if the linecast successfully collides with a valid object.
+
+The CapsuleCast method is used to generate a linecast either from the given CustomRaycast object or a default Physics.Linecast.
 
 #### CustomRaycast/3
 
@@ -6746,6 +7127,22 @@ The CustomRaycast method is used to generate a raycast based on the options defi
    * `bool` - Returns true if the line successfully collides with a valid object.
 
 The CustomLinecast method is used to generate a linecast based on the options defined in the CustomRaycast object.
+
+#### CustomCapsuleCast/6
+
+  > `public virtual bool CustomCapsuleCast(Vector3 point1, Vector3 point2, float radius, Vector3 direction, float maxDistance, out RaycastHit hitData)`
+
+  * Parameters
+   * `Vector3 point1` - The center of the sphere at the start of the capsule.
+   * `Vector3 point2` - The center of the sphere at the end of the capsule.
+   * `float radius` - The radius of the capsule.
+   * `Vector3 direction` - The direction into which to sweep the capsule.
+   * `float maxDistance` - The max length of the sweep.
+   * `out RaycastHit hitData` - The capsulecast hit data.
+  * Returns
+   * `bool` - Returns true if the capsule successfully collides with a valid object.
+
+The CustomCapsuleCast method is used to generate a capsulecast based on the options defined in the CustomRaycast object.
 
 ---
 
@@ -6951,6 +7348,24 @@ The GameObject that the SDK Object Alias script is applied to will become a chil
  * `public enum SDKObject` - Valid SDK Objects
   * `Boundary` - The main camera rig/play area object that defines the player boundary.
   * `Headset` - The main headset camera defines the player head.
+
+---
+
+## SDK Transform Modify (VRTK_SDKTransformModify)
+
+### Overview
+
+The SDK Transform Modify can be used to change a transform orientation at runtime based on the currently used SDK or SDK controller.
+
+### Inspector Parameters
+
+ * **Loaded SDK Setup:** An optional SDK Setup to use to determine when to modify the transform.
+ * **Controller Type:** An optional SDK controller type to use to determine when to modify the transform.
+ * **Position:** The new local position to change the transform to.
+ * **Rotation:** The new local rotation in eular angles to change the transform to.
+ * **Scale:** The new local scale to change the transform to.
+ * **Target:** The target transform to modify on enable. If this is left blank then the transform the script is attached to will be used.
+ * **Sdk Overrides:** A collection of SDK Transform overrides to change the given target transform for each specified SDK.
 
 ---
 
@@ -7341,6 +7756,15 @@ This is an abstract class to implement the interface required by all implemented
   * `None` - No hand is assigned.
   * `Left` - The left hand is assigned.
   * `Right` - The right hand is assigned.
+ * `public enum ControllerType` - SDK Controller types.
+  * `Undefined` - No controller type.
+  * `Custom` - A custom controller type.
+  * `Simulator_Hand` - The Simulator default hand controller.
+  * `SteamVR_ViveWand` - The HTC Vive wand controller for SteamVR.
+  * `SteamVR_OculusTouch` - The Oculus Touch controller for SteamVR.
+  * `Oculus_OculusTouch` - The Oculus Touch controller for Oculus Utilities.
+  * `Daydream_Controller` - The Daydream controller for Google Daydream SDK.
+  * `Ximmerse_Flip` - The Flip controller for Ximmerse SDK.
 
 ### Class Methods
 
@@ -7367,6 +7791,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
    * _none_
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
+
+#### GetCurrentControllerType/0
+
+  > `public abstract ControllerType GetCurrentControllerType();`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
 
 #### GetControllerDefaultColliderPath/1
 
@@ -7966,6 +8401,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
 
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+
 #### GetControllerDefaultColliderPath/1
 
   > `public override string GetControllerDefaultColliderPath(ControllerHand hand)`
@@ -8546,6 +8992,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
    * _none_
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
+
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
 
 #### GetControllerDefaultColliderPath/1
 
@@ -9147,6 +9604,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
 
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+
 #### GetControllerDefaultColliderPath/1
 
   > `public override string GetControllerDefaultColliderPath(ControllerHand hand)`
@@ -9747,6 +10215,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
 
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+
 #### GetControllerDefaultColliderPath/1
 
   > `public override string GetControllerDefaultColliderPath(ControllerHand hand)`
@@ -10346,6 +10825,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
 
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
+
 #### GetControllerDefaultColliderPath/1
 
   > `public override string GetControllerDefaultColliderPath(ControllerHand hand)`
@@ -10933,6 +11423,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
    * _none_
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
+
+#### GetCurrentControllerType/0
+
+  > `public override ControllerType GetCurrentControllerType()`
+
+  * Parameters
+   * _none_
+  * Returns
+   * `ControllerType` - The ControllerType based on the SDK and headset being used.
+
+The GetCurrentControllerType method returns the current used ControllerType based on the SDK and headset being used.
 
 #### GetControllerDefaultColliderPath/1
 

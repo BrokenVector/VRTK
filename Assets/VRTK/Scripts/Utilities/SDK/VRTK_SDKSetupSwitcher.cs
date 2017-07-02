@@ -112,7 +112,7 @@ namespace VRTK
                     return;
             }
 
-            fallbackCamera.gameObject.SetActive(Camera.main == null || Camera.main == fallbackCamera);
+            fallbackCamera.gameObject.SetActive(VRTK_DeviceFinder.HeadsetCamera() == null);
             eventSystem.gameObject.SetActive(EventSystem.current == null || EventSystem.current == eventSystem);
         }
 
@@ -133,7 +133,7 @@ namespace VRTK
                 chooseNoneButton.SetActive(true);
 
                 chooseNoneButton.GetComponent<Button>().onClick.AddListener(
-                    () => sdkManager.UnloadSDKSetup()
+                    () => sdkManager.UnloadSDKSetup(true)
                 );
 
                 chooseButtonGameObjects.Add(chooseNoneButton);
